@@ -5,6 +5,8 @@ from align_dlib import AlignDlib
 # for training/verification
 class SmilePreprocessor(object):
     def __init__(self, predictor_model="shape_predictor_68_face_landmarks.dat"):
+        # we use a pretrained model that can be downloaded from http://dlib.net/files/shape_predictor_68_face_landmarks.dat.bz2
+        # download it to the repo root and unzip using `bunzip2 [filename]`
         self.predictor_model = predictor_model
         self.face_detector = dlib.get_frontal_face_detector()
         self.face_pose_predictor = dlib.shape_predictor(predictor_model)
