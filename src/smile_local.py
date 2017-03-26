@@ -1,6 +1,6 @@
 import cv2
-from smile_preprocessor import SmilePreprocessor
-from smile_verifier import SmileVerifier
+from preprocessor import Preprocessor
+from model import Model
 
 # Local development helper, pressing spacebar while the utility
 # is running will the run the captured frame through SmilePreprocessor
@@ -8,14 +8,14 @@ from smile_verifier import SmileVerifier
 class SmileLocal(object):
     def __init__(self, camera=0):
         self.camera = cv2.VideoCapture(camera)
-        self.preprocessor = SmilePreprocessor()
-        self.verifier = SmileVerifier()
+        self.preprocessor = Preprocessor()
+        self.model = Model(self.preprocessor)
         self.cur_frame = None
 
     def process_frame(self):
         processed_faces = self.preprocessor.process(self.cur_frame)
         for f in processed_faces:
-            self.verifier.verify(f)
+            self.model.verify(f)
 
     def run(self):
         while True:
@@ -28,6 +28,10 @@ class SmileLocal(object):
             cv2.imshow("Frame", self.cur_frame)
 
             self.handle_interrupts()
+
+    def run_scripted(self):
+        self.model.scripted_run()
+
 
     def cleanup(self):
         self.camera.release()
@@ -44,7 +48,8 @@ class SmileLocal(object):
 def main():
     l = SmileLocal()
     try:
-        l.run()
+        #l.run()
+        l.run_scripted()
     finally:
         l.cleanup()
 

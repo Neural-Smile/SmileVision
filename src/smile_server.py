@@ -1,7 +1,7 @@
 #!/usr/bin/python
 from BaseHTTPServer import BaseHTTPRequestHandler,HTTPServer
-from smile_preprocessor import SmilePreprocessor
-from smile_verifier import SmileVerifier
+from preprocessor import Preprocessor
+from model import Model
 import numpy as np
 import base64
 import cv2
@@ -13,9 +13,9 @@ PORT_NUMBER = 3001
 # This server parses base64 encoded png images and runs them
 # through the preprocessor and the verifier and should eventually
 # be able to recognize identities
-class SmileHttpHandler(BaseHTTPRequestHandler):
+class VisionHandler(BaseHTTPRequestHandler):
     preprocessor = None
-    verifier = None
+    model = None
 
     def img_from_b64(self, b64_str):
         b_img = base64.b64decode(b64_str)
@@ -30,18 +30,23 @@ class SmileHttpHandler(BaseHTTPRequestHandler):
         processed = self.preprocessor.process(img)
         if len(processed) > 1:
             print("multiple faces")
-        identity = self.verifier.verify(processed[0])
+        identity = self.model.verify(processed[0])
         # return identity to user
         return
 
     def do_POST(self):
         if self.path == "/verify":
             return self.verify_img()
+        if self.path == "/train":
+            #TODO: how am I going to receive this data
+            img = None
+            label = None
+            model.train(img, label)
 
 try:
-    server = HTTPServer(('0.0.0.0', PORT_NUMBER), SmileHttpHandler)
-    SmileHttpHandler.preprocessor = SmilePreprocessor()
-    SmileHttpHandler.verifier = SmileVerifier()
+    server = HTTPServer(('0.0.0.0', PORT_NUMBER), VisionHandler)
+    VisionHandler.preprocessor = Preprocessor()
+    VisionHandler.verifier = Model()
     print 'Started httpserver on port ' , PORT_NUMBER
     server.serve_forever()
 except KeyboardInterrupt:
