@@ -60,7 +60,9 @@ class VisionHandler(BaseHTTPRequestHandler):
 
 try:
     VisionHandler.preprocessor = Preprocessor()
-    VisionHandler.model = Model(VisionHandler.preprocessor)
+    model = Model(VisionHandler.preprocessor)
+    model.initialize()
+    VisionHandler.model = model
     server = HTTPServer(('0.0.0.0', PORT_NUMBER), VisionHandler)
     print 'Started httpserver on port ' , PORT_NUMBER
     server.serve_forever()

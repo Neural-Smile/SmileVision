@@ -44,6 +44,9 @@ class SVM:
     def predict_prob(self, x_test):
         return self.clf.predict_proba(x_test) 
 
+    def cache_string(self):
+        return "SVM_cached"
+
 
 ## MULTI-LAYER PERCEPTRON ##
 class MLP:
@@ -78,6 +81,9 @@ class MLP:
     def predict_prob(self, x_test):
         return self.clf.predict_proba(x_test) 
 
+
+    def cache_string(self):
+        return "MLP_cached"
 
 ########################## ....
 ## CLASSIFIER SELECTION ##    .

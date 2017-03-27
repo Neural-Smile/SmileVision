@@ -28,6 +28,11 @@ class Preprocessor(object):
 
         return aligned_faces
 
+
+    def data_from_db(self):
+        pass
+
+
     def get_data(self):
         people = fetch_lfw_people(
             './data', min_faces_per_person=config['min_faces'], resize=config['aspect_ratio'])

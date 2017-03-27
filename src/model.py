@@ -6,12 +6,50 @@ from sklearn.metrics import classification_report
 from sklearn.metrics import confusion_matrix
 from sklearn.decomposition import RandomizedPCA
 from config import *
+import os.path
+import pickle
 
 # Interface between the server/local helper and the neural network
 class Model(object):
-    def __init__(self, preprocessor, clf_id=MLP_ID):
+    def __init__(self, preprocessor, clf_id=MLP_ID, db=None):
         self.preprocessor = preprocessor
+        self.clf_id = clf_id
         self.clf = classifiers.choose_clf(clf_id)
+        self.db = db
+
+    def initialize(self):
+        cache_path = self.clf.cache_string()
+        if LOAD_CACHE and os.path.isfile(cache_path):
+            print("Loading model from %s" % cache_path)
+            with open(cache_path, 'rb') as f:
+                self.clf = pickle.load(f)
+        else:
+            print("Initializing model")
+            if self.db:
+                print("Loading data from DB")
+                data = self.preprocessor.data_from_db()
+            else:
+                print("Loading data from sklearn")
+                data = self.preprocessor.get_data()
+
+            (X_train, 
+            X_test, \
+            y_train, \
+            y_test, \
+            target_names, \
+            H, \
+            W
+            ) = data
+
+            pca = RandomizedPCA(n_components=PCA_N_COMPONENTS, whiten=True).fit(X_train)
+            eigenfaces = pca.components_.reshape((PCA_N_COMPONENTS, H, W))
+            X_train_processed = pca.transform(X_train)
+            self.train(X_train_processed, y_train)
+            self.save_model()
+
+    def save_model(self):
+        with open(self.clf.cache_string(), 'wb') as f:
+            pickle.dump(self.clf, f)
 
 
     ## image is formatted and processed correctly by this point
@@ -64,7 +102,7 @@ class Model(object):
     def scripted_run(self):
         ## DATA INGEST ##
         (
-            X_train, 
+            X_train,
             X_test, \
             y_train, \
             y_test, \

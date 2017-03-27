@@ -4,6 +4,7 @@ MLP_ID = 1
 SVM_ID = 1
 NO_MATCH = "no_match"
 DEBUG = True
+LOAD_CACHE = True
 
 config = {
             'h'             : 250,
