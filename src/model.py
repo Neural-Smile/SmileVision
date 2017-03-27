@@ -14,10 +14,13 @@ class Model(object):
         self.clf = classifiers.choose_clf(clf_id)
 
 
+    ## image is formatted and processed correctly by this point
     def verify(self, img):
         helpers.save_image(img)
-        # find and return identity
-        return
+        y_prob = self.clf.predict_prob(img)
+        if self.has_match(y_prob):
+            return self.clf.predict(img)
+        return NO_MATCH
 
 
     def train(self, img, name):

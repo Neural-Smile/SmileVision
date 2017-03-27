@@ -45,7 +45,6 @@ class SVM:
         return self.clf.predict_proba(x_test) 
 
 
-
 ## MULTI-LAYER PERCEPTRON ##
 class MLP:
     def __init__(self, search=True, param_grid = []):

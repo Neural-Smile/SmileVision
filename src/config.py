@@ -2,6 +2,7 @@
 PCA_N_COMPONENTS = 150
 MLP_ID = 1
 SVM_ID = 1
+NO_MATCH = "no_match"
 DEBUG = True
 
 config = {

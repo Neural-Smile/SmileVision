@@ -22,31 +22,46 @@ class VisionHandler(BaseHTTPRequestHandler):
         nparr = np.fromstring(b_img, np.uint8)
         return cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
-    def verify_img(self):
+    def get_fields(self):
         form_data = self.rfile.read(int(self.headers["Content-Length"]))
-        fields = urlparse.parse_qs(form_data)
+        return urlparse.parse_qs(form_data)
+
+    def read_img(self, fields):
         b64_str= fields['image'][0]
-        img = self.img_from_b64(b64_str)
+        return self.img_from_b64(b64_str)
+
+    def verify_img(self):
+        fields = self.get_fields()
+        img = self.read_img(fields)
         processed = self.preprocessor.process(img)
         if len(processed) > 1:
             print("multiple faces")
         identity = self.model.verify(processed[0])
-        # return identity to user
-        return
+        return identity
+
+    def train(self):
+        fields = self.get_fields()
+        img = self.read_img(fields)
+        model.train(img, fields['label'])
+        return 200
 
     def do_POST(self):
+        print("Post request")
+        #TODO: need to parse endpoint, separate from params
         if self.path == "/verify":
-            return self.verify_img()
+            identity = self.verify_img()
+            self.send_response(200)
+            self.wfile.write(identity)
+
         if self.path == "/train":
-            #TODO: how am I going to receive this data
-            img = None
-            label = None
-            model.train(img, label)
+            resp = self.train()
+            self.send_response(resp)
+
 
 try:
-    server = HTTPServer(('0.0.0.0', PORT_NUMBER), VisionHandler)
     VisionHandler.preprocessor = Preprocessor()
-    VisionHandler.verifier = Model()
+    VisionHandler.model = Model(VisionHandler.preprocessor)
+    server = HTTPServer(('0.0.0.0', PORT_NUMBER), VisionHandler)
     print 'Started httpserver on port ' , PORT_NUMBER
     server.serve_forever()
 except KeyboardInterrupt:
