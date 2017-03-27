@@ -2,7 +2,9 @@ import dlib
 from align_dlib import AlignDlib
 from sklearn.cross_validation import train_test_split
 from sklearn.datasets import fetch_lfw_people
+import cv2
 from config import *
+
 
 # This does everything that needs to be done to an image before it's ready
 # for training/verification
@@ -15,18 +17,20 @@ class Preprocessor(object):
         self.face_pose_predictor = dlib.shape_predictor(predictor_model)
         self.face_aligner = AlignDlib(predictor_model)
 
+
     def process(self, img):
         detected_faces = self.face_detector(img, 1)
         aligned_faces = []
-
         for face_r in detected_faces:
             pose_landmarks = self.face_pose_predictor(img, face_r)
             aligned_face = self.face_aligner.align(534, img, face_r, landmarkIndices=AlignDlib.OUTER_EYES_AND_NOSE)
             aligned_faces.append(aligned_face)
-
-        #TODO: resize to config['aspect_ratio'] , dimensions must be consistent
-
         return aligned_faces
+
+
+    def resize(self, img):
+        cv2.resize(img, img, (W, H))
+        return img
 
 
     def data_from_db(self):

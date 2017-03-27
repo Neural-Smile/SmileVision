@@ -17,37 +17,49 @@ class VisionHandler(BaseHTTPRequestHandler):
     preprocessor = None
     model = None
 
+
     def img_from_b64(self, b64_str):
         b_img = base64.b64decode(b64_str)
         nparr = np.fromstring(b_img, np.uint8)
         return cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
+
     def get_fields(self):
         form_data = self.rfile.read(int(self.headers["Content-Length"]))
         return urlparse.parse_qs(form_data)
+
 
     def read_img(self, fields):
         b64_str= fields['image'][0]
         return self.img_from_b64(b64_str)
 
+
     def verify_img(self):
         fields = self.get_fields()
         img = self.read_img(fields)
         processed = self.preprocessor.process(img)
+        ## to conform to same size/ratio across all inputs
+        processed = self.preprocessor.resize(processed) 
         if len(processed) > 1:
             print("multiple faces")
         identity = self.model.verify(processed[0])
         return identity
 
+
     def train(self):
         fields = self.get_fields()
         img = self.read_img(fields)
-        model.train(img, fields['label'])
+        processed = self.preprocessor.process(img)
+        ## to conform to same size/ratio across all inputs
+        processed = self.preprocessor.resize(processed) 
+        model.train(processed, fields['label'])
         return 200
+
 
     def do_POST(self):
         print("Post request")
         #TODO: need to parse endpoint, separate from params
+
         if self.path == "/verify":
             identity = self.verify_img()
             self.send_response(200)

@@ -78,7 +78,7 @@ class Model(object):
         y_prob = self.clf.predict_prob(x_test) 
         for i in range(y_prob.shape[0]):
             print(self.confidence_title(y_pred, y_prob, target_names, i))
-            if(self.has_match(y_prob[i])):
+            if(not self.has_match(y_prob[i])):
                 print("SHOULD BE NEW PERSON")
 
 

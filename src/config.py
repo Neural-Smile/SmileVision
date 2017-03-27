@@ -6,6 +6,12 @@ NO_MATCH = "no_match"
 DEBUG = True
 LOAD_CACHE = True
 
+## these are supposed to be standard dimensions of img
+## not sure if discrepency actually affects things
+## or if i can just brute resize everything either
+W = 37
+H = 50
+
 config = {
             'h'             : 250,
             'w'             : 250,

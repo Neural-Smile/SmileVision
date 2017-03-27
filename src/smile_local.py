@@ -15,6 +15,7 @@ class SmileLocal(object):
     def process_frame(self):
         processed_faces = self.preprocessor.process(self.cur_frame)
         for f in processed_faces:
+            f = self.preprocessor(resize(f))
             self.model.verify(f)
 
     def run(self):
