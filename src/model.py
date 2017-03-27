@@ -16,54 +16,115 @@ class Model(object):
         self.clf_id = clf_id
         self.clf = classifiers.choose_clf(clf_id)
         self.db = db
+        self.initialized = False
+        self.target_names = None
+        self.pca = None
+
+    def cache_path(self):
+        filename = self.clf.cache_string()
+        return "./data/models/{}".format(filename)
+
+    def get_data(self):
+        if self.db:
+            print("Using training data from DB")
+            return self.preprocessor.data_from_db()
+        else:
+            print("Using training data from sklearn")
+            return self.preprocessor.get_data()
+
+    def get_pca_for(self, X_train):
+        if self.pca is None:
+            self.pca =  RandomizedPCA(n_components=PCA_N_COMPONENTS, whiten=True).fit(X_train)
+        return self.pca
+
+    def get_face_embeddings(self, faces):
+        pca = self.get_pca_for(faces)
+        pca.components_.reshape((PCA_N_COMPONENTS, H, W))
+        embeddings = pca.transform(faces)
+        return embeddings
+
+    def initialize_from_cache(self):
+        print("Loading cached model from %s" % self.cache_path())
+        self.load_model(self.cache_path())
+
+    def initialize_from_data(self, data):
+        (X_train, X_test, y_train, y_test, target_names) = data
+        self.target_names = target_names
+        X_train_embeddings = self.get_face_embeddings(X_train)
+        self.train(X_train_embeddings, y_train)
+        self.save_model(self.cache_path())
 
     def initialize(self):
-        cache_path = self.clf.cache_string()
-        if LOAD_CACHE and os.path.isfile(cache_path):
-            print("Loading model from %s" % cache_path)
-            with open(cache_path, 'rb') as f:
-                self.clf = pickle.load(f)
+        if self.initialized:
+            return
+
+        print("Initializing model")
+        if USE_CACHED_MODEL and self.cached_files_present():
+            self.initialize_from_cache()
         else:
-            print("Initializing model")
-            if self.db:
-                print("Loading data from DB")
-                data = self.preprocessor.data_from_db()
-            else:
-                print("Loading data from sklearn")
-                data = self.preprocessor.get_data()
+            data = self.get_data()
+            self.initialize_from_data(data)
+        self.initialized = True
 
-            (X_train, 
-            X_test, \
-            y_train, \
-            y_test, \
-            target_names, \
-            H, \
-            W
-            ) = data
+    def cached_files_present(self, basename=None):
+        if basename is None:
+            basename = self.cache_path()
 
-            pca = RandomizedPCA(n_components=PCA_N_COMPONENTS, whiten=True).fit(X_train)
-            eigenfaces = pca.components_.reshape((PCA_N_COMPONENTS, H, W))
-            X_train_processed = pca.transform(X_train)
-            self.train(X_train_processed, y_train)
-            self.save_model()
+        model = "{}_model.pkl".format(basename)
+        targets = "{}_figs.pkl".format(basename)
+        pca = "{}_pca.pkl".format(basename)
 
-    def save_model(self):
-        with open(self.clf.cache_string(), 'wb') as f:
+        res = os.path.exists(model)
+        res = res and os.path.exists(targets)
+        res = res and os.path.exists(pca)
+
+        return res
+
+    def save_model(self, basename=None):
+        if basename is None:
+            basename = self.cache_path()
+
+        model = "{}_model.pkl".format(basename)
+        targets = "{}_figs.pkl".format(basename)
+        pca = "{}_pca.pkl".format(basename)
+
+        with open(model, 'wb') as f:
             pickle.dump(self.clf, f)
+        with open(targets, 'wb') as f:
+            pickle.dump(self.target_names, f)
+        with open(pca, 'wb') as f:
+            pickle.dump(self.pca, f)
 
+    def load_model(self, basename=None):
+        if basename is None:
+            basename = self.cache_path()
+
+        model = "{}_model.pkl".format(basename)
+        targets = "{}_figs.pkl".format(basename)
+        pca = "{}_pca.pkl".format(basename)
+
+        with open(model, 'rb') as f:
+            self.clf = pickle.load(f)
+        with open(targets, 'rb') as f:
+            self.target_names = pickle.load(f)
+        with open(pca, 'rb') as f:
+            self.pca = pickle.load(f)
 
     ## image is formatted and processed correctly by this point
     def verify(self, img):
         helpers.save_image(img)
         y_prob = self.clf.predict_prob(img)
         if self.has_match(y_prob):
-            return self.clf.predict(img)
-        return NO_MATCH
-
+            identity = self.clf.predict(img)
+            if len(identity) > 1:
+                return False, False
+            name = self.target_names[identity[0]]
+            prob = y_prob[0][identity[0]]
+            return prob, name
+        return False, False
 
     def train(self, img, name):
-       self.clf.train(img, name) 
-
+       self.clf.train(img, name)
 
     def confidence_title(self, y_pred, y_prob, target_names, i):
         pred_name = target_names[y_pred[i]].rsplit(' ', 1)[-1]
@@ -73,15 +134,12 @@ class Model(object):
     def has_match(self, y_prob):
         return y_prob.max() > 0.7
 
-
     def display_confidence(self, x_test, y_pred, target_names):
-        y_prob = self.clf.predict_prob(x_test) 
+        y_prob = self.clf.predict_prob(x_test)
         for i in range(y_prob.shape[0]):
             print(self.confidence_title(y_pred, y_prob, target_names, i))
             if(not self.has_match(y_prob[i])):
                 print("SHOULD BE NEW PERSON")
-
-
 
     def eval_validation(self, x_test, y_test, target_names):
         y_pred = self.clf.predict(x_test)
@@ -98,29 +156,10 @@ class Model(object):
                              for i in range(y_pred.shape[0])]
         return prediction_titles
 
-
-    def scripted_run(self):
-        ## DATA INGEST ##
-        (
-            X_train,
-            X_test, \
-            y_train, \
-            y_test, \
-            target_names, \
-            H, \
-            W
-        ) = self.preprocessor.get_data()
-
-        ## ???: Can't wrap pca construction and take return from func, errors.
-        #pca = prepocessor.pca_eigenfaces(PCA_N_COMPONENTS, H, W)
-        pca = RandomizedPCA(
-            n_components=PCA_N_COMPONENTS, whiten=True).fit(X_train)
-        eigenfaces = pca.components_.reshape((PCA_N_COMPONENTS, H, W))
-        X_train_processed = pca.transform(X_train)
-
-        self.train(X_train_processed, y_train)
-
-        X_test_pca = pca.transform(X_test)
+    def initialize_and_test(self):
+        self.initialize()
+        (X_train, X_test, y_train, y_test, target_names) = self.get_data()
+        X_test_pca = self.get_face_embeddings(X_test)
         prediction_titles = self.eval_validation(X_test_pca, y_test, target_names)
         plot_gallery(X_test, prediction_titles, H, W, 6, 4)
 
@@ -141,5 +180,3 @@ def title(y_pred, y_test, target_names, i):
     pred_name = target_names[y_pred[i]].rsplit(' ', 1)[-1]
     true_name = target_names[y_test[i]].rsplit(' ', 1)[-1]
     return 'predicted: %s\ntrue:     %s'%(pred_name, true_name)
-
-
