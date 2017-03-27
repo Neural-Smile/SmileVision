@@ -1,10 +1,10 @@
 ## GLOBALS / CONSTANTS ##
 PCA_N_COMPONENTS = 150
 MLP_ID = 1
-SVM_ID = 1
+SVM_ID = 2
 NO_MATCH = "no_match"
 DEBUG = True
-LOAD_CACHE = True
+USE_CACHED_MODEL = True
 
 ## these are supposed to be standard dimensions of img
 ## not sure if discrepency actually affects things

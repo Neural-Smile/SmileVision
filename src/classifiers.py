@@ -42,10 +42,10 @@ class SVM:
 
 
     def predict_prob(self, x_test):
-        return self.clf.predict_proba(x_test) 
+        return self.clf.predict_proba(x_test)
 
     def cache_string(self):
-        return "SVM_cached"
+        return "SVM"
 
 
 ## MULTI-LAYER PERCEPTRON ##
@@ -74,24 +74,23 @@ class MLP:
 
 
     def predict(self, x_test):
-        #Debug info?
         return self.clf.predict(x_test)
 
 
     def predict_prob(self, x_test):
-        return self.clf.predict_proba(x_test) 
+        return self.clf.predict_proba(x_test)
 
 
     def cache_string(self):
-        return "MLP_cached"
+        return "MLP"
 
 ########################## ....
 ## CLASSIFIER SELECTION ##    .
 ##########################    v
-clf_menu =              {
-                            1 : MLP,
-                            2 : SVM 
-                        }
+clf_menu = {
+    1 : MLP,
+    2 : SVM
+}
 
 def choose_clf(choice, args = None):
     #TODO: double check i'm expanding this right
