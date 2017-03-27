@@ -25,8 +25,7 @@ class VisionHandler(BaseHTTPRequestHandler):
 
 
     def get_fields(self):
-        form_data = self.rfile.read(int(self.headers["Content-Length"]))
-        return urlparse.parse_qs(form_data)
+        return urlparse.parse_qs(self.path.split('?')[1])
 
 
     def read_img(self, fields):
@@ -57,15 +56,17 @@ class VisionHandler(BaseHTTPRequestHandler):
 
 
     def do_POST(self):
-        print("Post request")
+        print("POST request")
         #TODO: need to parse endpoint, separate from params
 
-        if self.path == "/verify":
+        if self.path.startswith("/verify"):
+            print("VERIFY request")
             identity = self.verify_img()
             self.send_response(200)
             self.wfile.write(identity)
 
-        if self.path == "/train":
+        if self.path.startswith("/train"):
+            print("TRAIN request")
             resp = self.train()
             self.send_response(resp)
 
