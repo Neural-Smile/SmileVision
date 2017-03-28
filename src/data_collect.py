@@ -8,13 +8,14 @@ from model import *
 from config import *
 import numpy as np
 from preprocessor import Preprocessor
+from sklearn.preprocessing import StandardScaler
 
 DELTA_ERROR = 0.01
 
 def has_converged(y):
     return Math.abs(y[-1] - y[-2]) <= DELTA_ERROR and Math.abs(y[-2] - y[-3]) <= DELTA_ERROR
 
-def test_case(param, values, n_classes, x_train, y_train, x_test, y_test, fig_name, other_args={}):
+def test_case(param, values, n_classes, x_train, y_train, x_test, y_test, data_name, other_args={}):
     y1 = []
     y2 = []
     losses = []
@@ -35,9 +36,9 @@ def test_case(param, values, n_classes, x_train, y_train, x_test, y_test, fig_na
             best_acc = accuracy
         y1.append(accuracy)
         y2.append(loss)
-        if len(y1) > 2 and has_converged(y):
-            print("Converged")
-            break
+#        if len(y1) > 2 and has_converged(y):
+#            print("Converged")
+#            break
 
     x = np.array(range(len(y1)))
 
@@ -53,12 +54,12 @@ def test_case(param, values, n_classes, x_train, y_train, x_test, y_test, fig_na
              'best_acc'    : best_acc,
              'best_val'    : best_val,
              'other_args'  : other_args}
-    save_test_stats(stats)
-    save_graph(x, y1, y2, param, values)
+    save_test_stats(stats, data_name)
+    save_graph(x, y1, y2, param, values, data_name)
 
     print("Best %s: %s\nAccuracy %s" % (param, best_val, best_acc))
 
-def save_graph(x, y1, y2, param, values, fig_name):
+def save_graph(x, y1, y2, param, values, data_name):
     xTicks = [str(values[i]) for i in range(len(x))]
     fig, ax = plt.subplots()
     plt.xticks(x, xTicks)
@@ -66,9 +67,10 @@ def save_graph(x, y1, y2, param, values, fig_name):
     plt.xticks(x, xTicks)
     line2, = ax.plot(x, y2, '-', label='Loss')
     ax.legend(loc = 'lower right')
-    #plt.show()
+    ax.set_xlabel(param)
+    plt.show()
     fig.autofmt_xdate(rotation=80)
-    plt.savefig("data/graphs/" + "%s.png" % (fig_name))
+    plt.savefig("data/graphs/" + "%s.png" % (data_name))
 
 
 def test_single_var(test_arg, value, n_classes, x_train, y_train, x_test, y_test, other_args = {}):
@@ -87,8 +89,8 @@ def test_single_var(test_arg, value, n_classes, x_train, y_train, x_test, y_test
 
     return accuracy, loss, train_time
 
-def save_test_stats(stats):
-    with open("./data/stats/" + "%s_%s" % (stats['param'], stats['values'][0]), 'a') as f:
+def save_test_stats(stats, data_name):
+    with open("./data/stats/" + "%s" % data_name, 'a') as f:
         print("##TESTCASE##", file=f)
         for k,v in stats.items():
             print("%s: %s" % (k,v), file=f)
@@ -101,9 +103,13 @@ pca = RandomizedPCA(n_components=200, whiten=True).fit(X_train)
 eigenfaces = pca.components_.reshape((200, 50, 37))
 x_train = pca.transform(X_train)
 x_test = pca.transform(X_test)
+scaler = StandardScaler()
+scaler.fit(x_train)
+x_train = scaler.transform(x_train)
+x_test = scaler.transform(x_test)
 
-from IPython import embed
-embed()
+#from IPython import embed
+#embed()
 
 #test_case("hidden_layer_sizes", [(50, 3), (60, 3), (40, 4)], n_classes, x_train, y_train, x_test, y_test)
 #test_case("hidden_layer_sizes", [(40, 4), (60, 4), (40, 5), (60, 5), (40, 6), (40, 7)], n_classes, x_train, y_train, x_test, y_test)
@@ -124,4 +130,8 @@ embed()
 #test_case("hidden_layer_sizes", [(50, 50),(50, 100),(50, 120), (50, 125),(50,130)], n_classes, x_train, y_train, x_test, y_test, other_args = {'alpha': 1.1, 'beta_1': 0.9, 'learning_rate': 'constant'}) ## with max_iter = 3000, batch_size = 3000
 #test_case("hidden_layer_sizes", [(i,1) for i in range(1,100,2)], n_classes, x_train, y_train, x_test, y_test, "hi_iter_batch_(i,1-100)", other_args = {'alpha': 1.1, 'beta_1': 0.9, 'learning_rate': 'constant', 'max_iter' : 3000, 'batch_size' : 3000}) #0 variance in acc basically
 #test_case("hidden_layer_sizes", [(i,3) for i in range(1,500,10)], n_classes, x_train, y_train, x_test, y_test, "hi_iter_batch_(i,1-500)", other_args = {'alpha': 1.1, 'beta_1': 0.9, 'learning_rate': 'constant', 'max_iter' : 3000, 'batch_size' : 3000})
-test_case("hidden_layer_sizes", [(20,i) for i in range(3,200,5)], n_classes, x_train, y_train, x_test, y_test, "hi_iter_batch_(20,3-200)", other_args = {'alpha': 1.1, 'beta_1': 0.9, 'learning_rate': 'constant', 'max_iter' : 3000, 'batch_size' : 3000})
+#test_case("hidden_layer_sizes", [(20,i) for i in range(3,200,5)], n_classes, x_train, y_train, x_test, y_test, "hi_iter_batch_(20,3-200)", other_args = {'alpha': 1.1, 'beta_1': 0.9, 'learning_rate': 'constant', 'max_iter' : 3000, 'batch_size' : 3000}) # jumped around 37-40% after 8 layers
+"""lets try to mess with batch size"""
+#test_case("batch_size", [i for i in range(10, 2000,25)], n_classes, x_train, y_train, x_test, y_test, "batchsize[10-2000](20,8)", other_args = {'alpha': 1.1, 'beta_1': 0.9, 'learning_rate': 'constant', 'max_iter' : 3000, 'hidden_layer_size': (20,8)}) # batch size 80-100 was giving 80-100 acc
+"""again hidden layer sizes (20,8) was found to be best with batch size 80"""
+test_case("batch_size", [i for i in range(10, 2000,25)], n_classes, x_train, y_train, x_test, y_test, "batchsize[10-2000](20,8)", other_args = {'alpha':1.1, 'beta_1':0.9, 'learning_rate':'constant', 'max_iter':3000, 'hidden_layer_size':(20,8), 'batch_size':80})
