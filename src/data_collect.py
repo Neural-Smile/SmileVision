@@ -9,10 +9,14 @@ from config import *
 import numpy as np
 from preprocessor import Preprocessor
 
-def test_case(param, values, n_classes, x_train, y_train, x_test, y_test, other_args={}):
+DELTA_ERROR = 0.01
+
+def has_converged(y):
+    return Math.abs(y[-1] - y[-2]) <= DELTA_ERROR and Math.abs(y[-2] - y[-3]) <= DELTA_ERROR
+
+def test_case(param, values, n_classes, x_train, y_train, x_test, y_test, fig_name, other_args={}):
     y1 = []
     y2 = []
-    x = np.array(range(len(values)))
     losses = []
     accuracies = []
     times = []
@@ -31,7 +35,11 @@ def test_case(param, values, n_classes, x_train, y_train, x_test, y_test, other_
             best_acc = accuracy
         y1.append(accuracy)
         y2.append(loss)
+        if len(y1) > 2 and has_converged(y):
+            print("Converged")
+            break
 
+    x = np.array(range(len(y1)))
 
     ## STATS ##
     stats = {'n_samples'   : x_train.shape[0],
@@ -50,8 +58,8 @@ def test_case(param, values, n_classes, x_train, y_train, x_test, y_test, other_
 
     print("Best %s: %s\nAccuracy %s" % (param, best_val, best_acc))
 
-def save_graph(x, y1, y2, param, values):
-    xTicks = [str(val) for val in values]
+def save_graph(x, y1, y2, param, values, fig_name):
+    xTicks = [str(values[i]) for i in range(len(x))]
     fig, ax = plt.subplots()
     plt.xticks(x, xTicks)
     line1, = ax.plot(x, y1, '-', label='Accuracy')
@@ -59,13 +67,14 @@ def save_graph(x, y1, y2, param, values):
     line2, = ax.plot(x, y2, '-', label='Loss')
     ax.legend(loc = 'lower right')
     #plt.show()
-    plt.savefig("data/graphs/" + "%s_%s" % (param, values[0]))
+    fig.autofmt_xdate(rotation=80)
+    plt.savefig("data/graphs/" + "%s.png" % (fig_name))
 
 
 def test_single_var(test_arg, value, n_classes, x_train, y_train, x_test, y_test, other_args = {}):
     all_args = {test_arg : value}
     all_args.update(other_args)
-    mlp = MLPClassifier(activation="relu", solver="adam", max_iter = 1000, batch_size = 1000, **all_args)
+    mlp = MLPClassifier(activation="relu", solver="adam", **all_args)
     t0 = time()
     mlp.fit(x_train, y_train)
     train_time = (time() - t0)
@@ -93,6 +102,9 @@ eigenfaces = pca.components_.reshape((200, 50, 37))
 x_train = pca.transform(X_train)
 x_test = pca.transform(X_test)
 
+from IPython import embed
+embed()
+
 #test_case("hidden_layer_sizes", [(50, 3), (60, 3), (40, 4)], n_classes, x_train, y_train, x_test, y_test)
 #test_case("hidden_layer_sizes", [(40, 4), (60, 4), (40, 5), (60, 5), (40, 6), (40, 7)], n_classes, x_train, y_train, x_test, y_test)
 #test_case("hidden_layer_sizes", [(40, 7), (40, 10), (40, 12), (20, 20), (40, 20), (80, 20)], n_classes, x_train, y_train, x_test, y_test)
@@ -103,4 +115,13 @@ x_test = pca.transform(X_test)
 #test_case("alpha", [0.0001, 0.001, 0.01, 0.1, 1, 10], n_classes, x_train, y_train, x_test, y_test, other_args = {'hidden_layer_sizes': (52, 160)})
 #test_case("alpha", [1, 1.1, 1.2, 1.3, 2, 3, 4, 5], n_classes, x_train, y_train, x_test, y_test, other_args = {'hidden_layer_sizes': (52, 160)})
 """alpha 1-1.3 all jump around same accuracy.. idk"""
-test_case("beta_1", [0.7, 0.8, 0.9, 0.92, 0.94], n_classes, x_train, y_train, x_test, y_test, other_args = {'hidden_layer_sizes': (52, 160), 'alpha': 1.1})
+#test_case("beta_1", [0.7, 0.8, 0.9, 0.92, 0.94], n_classes, x_train, y_train, x_test, y_test, other_args = {'hidden_layer_sizes': (52, 160), 'alpha': 1.1})
+#test_case("beta_1", [0.88,0.89,0.9,0.91,0.92], n_classes, x_train, y_train, x_test, y_test, other_args = {'hidden_layer_sizes': (52, 160), 'alpha': 1.1})
+"""stick to beta_1 0.9"""
+#test_case("hidden_layer_sizes", [(50,160), (45, 160), (55, 160), (50, 130), (50, 190)], n_classes, x_train, y_train, x_test, y_test, other_args = {'hidden_layer_sizes': (52, 160), 'alpha': 1.1, 'beta_1': 0.9, 'learning_rate': 'adaptive'})
+#test_case("hidden_layer_sizes", [(50,130), (50, 100), (50, 50), (50, 120), (50, 125)], n_classes, x_train, y_train, x_test, y_test, other_args = {'alpha': 1.1, 'beta_1': 0.9, 'learning_rate': 'adaptive'})
+"""adaptive learning isn't doing anything for me, and very sporadic results"""
+#test_case("hidden_layer_sizes", [(50, 50),(50, 100),(50, 120), (50, 125),(50,130)], n_classes, x_train, y_train, x_test, y_test, other_args = {'alpha': 1.1, 'beta_1': 0.9, 'learning_rate': 'constant'}) ## with max_iter = 3000, batch_size = 3000
+#test_case("hidden_layer_sizes", [(i,1) for i in range(1,100,2)], n_classes, x_train, y_train, x_test, y_test, "hi_iter_batch_(i,1-100)", other_args = {'alpha': 1.1, 'beta_1': 0.9, 'learning_rate': 'constant', 'max_iter' : 3000, 'batch_size' : 3000}) #0 variance in acc basically
+#test_case("hidden_layer_sizes", [(i,3) for i in range(1,500,10)], n_classes, x_train, y_train, x_test, y_test, "hi_iter_batch_(i,1-500)", other_args = {'alpha': 1.1, 'beta_1': 0.9, 'learning_rate': 'constant', 'max_iter' : 3000, 'batch_size' : 3000})
+test_case("hidden_layer_sizes", [(20,i) for i in range(3,200,5)], n_classes, x_train, y_train, x_test, y_test, "hi_iter_batch_(20,3-200)", other_args = {'alpha': 1.1, 'beta_1': 0.9, 'learning_rate': 'constant', 'max_iter' : 3000, 'batch_size' : 3000})
