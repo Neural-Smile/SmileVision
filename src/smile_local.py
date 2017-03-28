@@ -1,6 +1,7 @@
 import cv2
-from smile_preprocessor import SmilePreprocessor
-from smile_verifier import SmileVerifier
+from preprocessor import Preprocessor
+from model import Model
+import numpy as np
 
 # Local development helper, pressing spacebar while the utility
 # is running will the run the captured frame through SmilePreprocessor
@@ -8,14 +9,26 @@ from smile_verifier import SmileVerifier
 class SmileLocal(object):
     def __init__(self, camera=0):
         self.camera = cv2.VideoCapture(camera)
-        self.preprocessor = SmilePreprocessor()
-        self.verifier = SmileVerifier()
         self.cur_frame = None
+        self.preprocessor = Preprocessor()
+        self.model = Model(self.preprocessor)
+        self.model.initialize()
 
     def process_frame(self):
-        processed_faces = self.preprocessor.process(self.cur_frame)
-        for f in processed_faces:
-            self.verifier.verify(f)
+        found_faces = self.preprocessor.process(self.cur_frame)
+        if len(found_faces) > 1:
+            print("Cannot train on more than one face in the image")
+            return
+        if len(found_faces) > 0:
+            self.process_face(found_faces[0])
+
+    def process_face(self, face):
+        embedding = self.model.get_face_embeddings(np.array([face]))
+        certainty, name = self.model.verify(embedding)
+        if name:
+            print("{} with probability : {}".format(name, certainty))
+        else:
+            print "no match"
 
     def run(self):
         while True:
@@ -26,12 +39,15 @@ class SmileLocal(object):
                 break
 
             cv2.imshow("Frame", self.cur_frame)
-
             self.handle_interrupts()
+
+    def initialize_and_test(self):
+        self.model.initialize_and_test()
 
     def cleanup(self):
         self.camera.release()
         cv2.destroyAllWindows()
+        self.model.save_model()
 
     def handle_interrupts(self):
         key = cv2.waitKey(1) & 0xFF
@@ -44,6 +60,7 @@ class SmileLocal(object):
 def main():
     l = SmileLocal()
     try:
+        l.initialize_and_test()
         l.run()
     finally:
         l.cleanup()
