@@ -124,3 +124,30 @@ x_test = scaler.transform(x_test)
 # Drop into an ipython session to experiment
 from IPython import embed
 embed()
+
+#test_case("hidden_layer_sizes", [(50, 3), (60, 3), (40, 4)], n_classes, x_train, y_train, x_test, y_test)
+#test_case("hidden_layer_sizes", [(40, 4), (60, 4), (40, 5), (60, 5), (40, 6), (40, 7)], n_classes, x_train, y_train, x_test, y_test)
+#test_case("hidden_layer_sizes", [(40, 7), (40, 10), (40, 12), (20, 20), (40, 20), (80, 20)], n_classes, x_train, y_train, x_test, y_test)
+#test_case("hidden_layer_sizes", [(50, 20), (40, 30), (40, 40), (40, 50), (40, 100), (40, 200)], n_classes, x_train, y_train, x_test, y_test)
+#test_case("hidden_layer_sizes", [(i, 160) for i in range(30,55)], n_classes, x_train, y_train, x_test, y_test)
+#test_case("hidden_layer_sizes", [(i, 160) for i in range(48,55)], n_classes, x_train, y_train, x_test, y_test)
+""" ok found (52, 160) to be pretty good, setting model to this """
+#test_case("alpha", [0.0001, 0.001, 0.01, 0.1, 1, 10], n_classes, x_train, y_train, x_test, y_test, other_args = {'hidden_layer_sizes': (52, 160)})
+#test_case("alpha", [1, 1.1, 1.2, 1.3, 2, 3, 4, 5], n_classes, x_train, y_train, x_test, y_test, other_args = {'hidden_layer_sizes': (52, 160)})
+"""alpha 1-1.3 all jump around same accuracy.. idk"""
+# test_case("beta_1", [0.7, 0.8, 0.9, 0.92, 0.94], n_classes, x_train, y_train, x_test, y_test, other_args = {'hidden_layer_sizes': (52, 160), 'alpha': 1.1})
+# test_case("hidden_layer_sizes", [(20,1)], n_classes, x_train, y_train, x_test, y_test)
+#test_case("beta_1", [0.7, 0.8, 0.9, 0.92, 0.94], n_classes, x_train, y_train, x_test, y_test, other_args = {'hidden_layer_sizes': (52, 160), 'alpha': 1.1})
+#test_case("beta_1", [0.88,0.89,0.9,0.91,0.92], n_classes, x_train, y_train, x_test, y_test, other_args = {'hidden_layer_sizes': (52, 160), 'alpha': 1.1})
+"""stick to beta_1 0.9"""
+#test_case("hidden_layer_sizes", [(50,160), (45, 160), (55, 160), (50, 130), (50, 190)], n_classes, x_train, y_train, x_test, y_test, other_args = {'hidden_layer_sizes': (52, 160), 'alpha': 1.1, 'beta_1': 0.9, 'learning_rate': 'adaptive'})
+#test_case("hidden_layer_sizes", [(50,130), (50, 100), (50, 50), (50, 120), (50, 125)], n_classes, x_train, y_train, x_test, y_test, other_args = {'alpha': 1.1, 'beta_1': 0.9, 'learning_rate': 'adaptive'})
+"""adaptive learning isn't doing anything for me, and very sporadic results"""
+#test_case("hidden_layer_sizes", [(50, 50),(50, 100),(50, 120), (50, 125),(50,130)], n_classes, x_train, y_train, x_test, y_test, other_args = {'alpha': 1.1, 'beta_1': 0.9, 'learning_rate': 'constant'}) ## with max_iter = 3000, batch_size = 3000
+#test_case("hidden_layer_sizes", [(i,1) for i in range(1,100,2)], n_classes, x_train, y_train, x_test, y_test, "hi_iter_batch_(i,1-100)", other_args = {'alpha': 1.1, 'beta_1': 0.9, 'learning_rate': 'constant', 'max_iter' : 3000, 'batch_size' : 3000}) #0 variance in acc basically
+#test_case("hidden_layer_sizes", [(i,3) for i in range(1,500,10)], n_classes, x_train, y_train, x_test, y_test, "hi_iter_batch_(i,1-500)", other_args = {'alpha': 1.1, 'beta_1': 0.9, 'learning_rate': 'constant', 'max_iter' : 3000, 'batch_size' : 3000})
+#test_case("hidden_layer_sizes", [(20,i) for i in range(3,200,5)], n_classes, x_train, y_train, x_test, y_test, "hi_iter_batch_(20,3-200)", other_args = {'alpha': 1.1, 'beta_1': 0.9, 'learning_rate': 'constant', 'max_iter' : 3000, 'batch_size' : 3000}) # jumped around 37-40% after 8 layers
+"""lets try to mess with batch size"""
+#test_case("batch_size", [i for i in range(10, 2000,25)], n_classes, x_train, y_train, x_test, y_test, "batchsize[10-2000](20,8)", other_args = {'alpha': 1.1, 'beta_1': 0.9, 'learning_rate': 'constant', 'max_iter' : 3000, 'hidden_layer_size': (20,8)}) # batch size 80-100 was giving 80-100 acc
+"""again hidden layer sizes (20,8) was found to be best with batch size 80"""
+# test_case("batch_size", [i for i in range(10, 2000,25)], n_classes, x_train, y_train, x_test, y_test, "batchsize[10-2000](20,8)", other_args = {'alpha':1.1, 'beta_1':0.9, 'learning_rate':'constant', 'max_iter':3000, 'hidden_layer_size':(20,8), 'batch_size':80})
