@@ -20,18 +20,20 @@ def test_case(param, values, n_classes, x_train, y_train, x_test, y_test, other_
     best_val = None
 
     ## ITER ##
-    for val in values:
-        accuracy, loss, time = test_single_var(param, val, n_classes, x_train, y_train, x_test, y_test, other_args)
-        print("Param: %s, value: %s, accuracy: %s, loss: %s" % (param, val, accuracy, loss))
-        accuracies.append(accuracy)
-        losses.append(loss)
-        times.append(time)
-        if accuracy > best_acc:
-            best_val = val
-            best_acc = accuracy
-        y1.append(accuracy)
-        y2.append(loss)
-
+    try:
+        for val in values:
+            accuracy, loss, time = test_single_var(param, val, n_classes, x_train, y_train, x_test, y_test, other_args)
+            print("Param: %s, value: %s, accuracy: %s, loss: %s" % (param, val, accuracy, loss))
+            accuracies.append(accuracy)
+            losses.append(loss)
+            times.append(time)
+            if accuracy > best_acc:
+                best_val = val
+                best_acc = accuracy
+            y1.append(accuracy)
+            y2.append(loss)
+    except KeyboardInterrupt:
+        pass
 
     ## STATS ##
     stats = {'n_samples'   : x_train.shape[0],
@@ -46,6 +48,10 @@ def test_case(param, values, n_classes, x_train, y_train, x_test, y_test, other_
              'best_val'    : best_val,
              'other_args'  : other_args}
     save_test_stats(stats)
+    max_y1 = float(max(y1))
+    max_y2 = float(max(y2))
+    y1 = list(map(lambda x: x/max_y1, y1))
+    y2 = list(map(lambda x: x/max_y2, y2))
     save_graph(x, y1, y2, param, values)
 
     print("Best %s: %s\nAccuracy %s" % (param, best_val, best_acc))
@@ -59,13 +65,15 @@ def save_graph(x, y1, y2, param, values):
     line2, = ax.plot(x, y2, '-', label='Loss')
     ax.legend(loc = 'lower right')
     #plt.show()
+    fig.autofmt_xdate(rotation=80)
     plt.savefig("data/graphs/" + "%s_%s" % (param, values[0]))
 
 
 def test_single_var(test_arg, value, n_classes, x_train, y_train, x_test, y_test, other_args = {}):
+    all_args = {'activation':"relu", 'solver':"adam", 'max_iter':100, 'batch_size':30}
     all_args = {test_arg : value}
     all_args.update(other_args)
-    mlp = MLPClassifier(activation="relu", solver="adam", max_iter = 1000, batch_size = 1000, **all_args)
+    mlp = MLPClassifier(**all_args)
     t0 = time()
     mlp.fit(x_train, y_train)
     train_time = (time() - t0)
@@ -86,12 +94,20 @@ def save_test_stats(stats):
 
 p = Preprocessor()
 X_train, X_test, y_train, y_test, target_names = p.get_data()
+print("LOADED DATA")
 n_classes = target_names.shape[0]
+
+from sklearn.preprocessing import StandardScaler
+scaler = StandardScaler()
 
 pca = RandomizedPCA(n_components=200, whiten=True).fit(X_train)
 eigenfaces = pca.components_.reshape((200, 50, 37))
 x_train = pca.transform(X_train)
 x_test = pca.transform(X_test)
+
+scaler.fit(x_train)
+x_train = scaler.transform(x_train)
+x_test = scaler.transform(x_test)
 
 #test_case("hidden_layer_sizes", [(50, 3), (60, 3), (40, 4)], n_classes, x_train, y_train, x_test, y_test)
 #test_case("hidden_layer_sizes", [(40, 4), (60, 4), (40, 5), (60, 5), (40, 6), (40, 7)], n_classes, x_train, y_train, x_test, y_test)
@@ -103,4 +119,7 @@ x_test = pca.transform(X_test)
 #test_case("alpha", [0.0001, 0.001, 0.01, 0.1, 1, 10], n_classes, x_train, y_train, x_test, y_test, other_args = {'hidden_layer_sizes': (52, 160)})
 #test_case("alpha", [1, 1.1, 1.2, 1.3, 2, 3, 4, 5], n_classes, x_train, y_train, x_test, y_test, other_args = {'hidden_layer_sizes': (52, 160)})
 """alpha 1-1.3 all jump around same accuracy.. idk"""
-test_case("beta_1", [0.7, 0.8, 0.9, 0.92, 0.94], n_classes, x_train, y_train, x_test, y_test, other_args = {'hidden_layer_sizes': (52, 160), 'alpha': 1.1})
+# test_case("beta_1", [0.7, 0.8, 0.9, 0.92, 0.94], n_classes, x_train, y_train, x_test, y_test, other_args = {'hidden_layer_sizes': (52, 160), 'alpha': 1.1})
+# test_case("hidden_layer_sizes", [(20,1)], n_classes, x_train, y_train, x_test, y_test)
+from IPython import embed
+embed()
