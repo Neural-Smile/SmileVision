@@ -1,0 +1,48 @@
+#!/usr/bin/env python
+
+import cv2
+import time
+import os.path
+import os
+
+camera = cv2.VideoCapture(0)
+
+grabbed, frame = camera.read()
+
+if not grabbed:
+    print("Could not read from camera")
+    exit(1)
+
+images_path = "data/face_collection"
+images_wanted = 100
+images_taken = 0
+
+if not os.path.exists(images_path):
+    print("directory {} doesn't existing creating it".format(images_path))
+    os.makedirs(images_path)
+
+while True:
+    grabbed, frame = camera.read()
+    h, w, _ = frame.shape
+    h, w = h/3, w/3
+
+    if not grabbed:
+        print("WTF")
+        exit(1)
+
+    disp = frame.copy()
+    msg = "(Spacebar to save/ 'q' to quit) Images taken: {}/{}".format(images_taken, images_wanted)
+    cv2.putText(disp, msg, (30, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 2)
+    cv2.putText(disp, "saving images to {}".format(os.path.abspath(images_path)), (30, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 2)
+
+    cv2.imshow("frame", disp)
+
+    key = cv2.waitKey(1)
+    if key == ord("q") or images_taken >= images_wanted:
+        break
+    if key == ord(" "):
+        frame = cv2.resize(frame, (w, h))
+        timestamp = str(time.time()).replace(".", "")
+        filename = "{}/img_{}_{}.png".format(images_path, timestamp, images_taken)
+        cv2.imwrite(filename, frame)
+        images_taken += 1
