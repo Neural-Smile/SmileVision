@@ -15,7 +15,7 @@ H = 50
 config = {
             'h'             : 250,
             'w'             : 250,
-            'min_faces'     : 70,
+            'min_faces'     : 10,
             'aspect_ratio'  : 0.4
          }
 
