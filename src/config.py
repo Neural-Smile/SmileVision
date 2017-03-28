@@ -5,12 +5,14 @@ SVM_ID = 2
 NO_MATCH = "no_match"
 DEBUG = True
 USE_CACHED_MODEL = True
+SMILE_DATASET_PATH = "data/smile_home"
+PREPROCESSOR_CACHE_PATH = "data/preprocessor_cache"
 
 ## these are supposed to be standard dimensions of img
 ## not sure if discrepency actually affects things
 ## or if i can just brute resize everything either
-W = 37
-H = 50
+processed_width = 100
+processed_height = 100
 
 config = {
             'h'             : 250,
