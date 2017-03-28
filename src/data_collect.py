@@ -12,7 +12,6 @@ from preprocessor import Preprocessor
 def test_case(param, values, n_classes, x_train, y_train, x_test, y_test, other_args={}):
     y1 = []
     y2 = []
-    xTicks = [str(val) for val in values]
     x = np.array(range(len(values)))
     losses = []
     accuracies = []
@@ -47,8 +46,12 @@ def test_case(param, values, n_classes, x_train, y_train, x_test, y_test, other_
              'best_val'    : best_val,
              'other_args'  : other_args}
     save_test_stats(stats)
+    save_graph(x, y1, y2, param, values)
 
-    ## GRAPH ##
+    print("Best %s: %s\nAccuracy %s" % (param, best_val, best_acc))
+
+def save_graph(x, y1, y2, param, values):
+    xTicks = [str(val) for val in values]
     fig, ax = plt.subplots()
     plt.xticks(x, xTicks)
     line1, = ax.plot(x, y1, '-', label='Accuracy')
@@ -58,7 +61,6 @@ def test_case(param, values, n_classes, x_train, y_train, x_test, y_test, other_
     #plt.show()
     plt.savefig("data/graphs/" + "%s_%s" % (param, values[0]))
 
-    print("Best %s: %s\nAccuracy %s" % (param, best_val, best_acc))
 
 def test_single_var(test_arg, value, n_classes, x_train, y_train, x_test, y_test, other_args = {}):
     all_args = {test_arg : value}
@@ -86,17 +88,6 @@ p = Preprocessor()
 X_train, X_test, y_train, y_test, target_names = p.get_data()
 n_classes = target_names.shape[0]
 
-#people = fetch_lfw_people(
-#    './data', min_faces_per_person=10, resize=config['aspect_ratio'], funneled=False)
-#n_samples, H, W = people.images.shape
-#X = people.data
-#y = people.target
-#target_names = people.target_names
-#X_train, X_test, y_train, y_test = train_test_split(
-#    X, y, test_size=0.25)
-
-#print(X, y, H, W, n_samples)
-
 pca = RandomizedPCA(n_components=200, whiten=True).fit(X_train)
 eigenfaces = pca.components_.reshape((200, 50, 37))
 x_train = pca.transform(X_train)
@@ -110,8 +101,6 @@ x_test = pca.transform(X_test)
 #test_case("hidden_layer_sizes", [(i, 160) for i in range(48,55)], n_classes, x_train, y_train, x_test, y_test)
 """ ok found (52, 160) to be pretty good, setting model to this """
 #test_case("alpha", [0.0001, 0.001, 0.01, 0.1, 1, 10], n_classes, x_train, y_train, x_test, y_test, other_args = {'hidden_layer_sizes': (52, 160)})
-test_case("alpha", [1, 1.1, 1.2, 1.3, 2, 3, 4, 5], n_classes, x_train, y_train, x_test, y_test, other_args = {'hidden_layer_sizes': (52, 160)})
-
-
-#values3layer = [(i,3) for i in range(40,60)]
-#test_case("hidden_layer_sizes", values3layer, n_classes, x_train, y_train, x_test, y_test)
+#test_case("alpha", [1, 1.1, 1.2, 1.3, 2, 3, 4, 5], n_classes, x_train, y_train, x_test, y_test, other_args = {'hidden_layer_sizes': (52, 160)})
+"""alpha 1-1.3 all jump around same accuracy.. idk"""
+test_case("beta_1", [0.7, 0.8, 0.9, 0.92, 0.94], n_classes, x_train, y_train, x_test, y_test, other_args = {'hidden_layer_sizes': (52, 160), 'alpha': 1.1})
