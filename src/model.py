@@ -57,12 +57,12 @@ class Model(object):
         self.train(X_train_embeddings, y_train)
         self.save_model(self.cache_path())
 
-    def initialize(self):
-        if self.initialized:
+    def initialize(self, force=False):
+        if self.initialized and not force:
             return
 
         print("Initializing model")
-        if USE_CACHED_MODEL and self.cached_files_present():
+        if not force and USE_CACHED_MODEL and self.cached_files_present():
             self.initialize_from_cache()
         else:
             data = self.get_data()
@@ -116,7 +116,6 @@ class Model(object):
     def verify(self, embedding):
         y_prob = self.clf.predict_prob(embedding)
         y_pred = self.clf.predict(embedding)
-        import pdb; pdb.set_trace()
         print("Predicted: %s\n Confidence: %s" % (self.target_names[y_pred], y_prob[0][y_pred]))
         if self.has_match(y_prob):
             return self.target_names[y_pred][0]

@@ -53,7 +53,9 @@ class SmileLocal(object):
     def train_new_identity(self, identity, imgs):
         imgs = np.array(imgs)
         self.save_user_imgs(identity, imgs)
-        return self.model.train_new_identity(identity, imgs)
+        self.model.initialize(force=True)
+        self.model.save_model()
+        return True
 
     def run(self):
         while True:

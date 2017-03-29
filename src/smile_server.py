@@ -58,6 +58,7 @@ class VisionHandler(BaseHTTPRequestHandler):
         if self.path.startswith("/train"):
             resp = self.train()
             self.send_response(200)
+            self.end_headers()
             if resp:
                 self.wfile.write("success")
             else:
