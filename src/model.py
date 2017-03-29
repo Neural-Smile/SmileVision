@@ -116,8 +116,6 @@ class Model(object):
             self.pca = pickle.load(f)
 
     def verify(self, img):
-        print(self.clf.clf.get_params())
-        print(self.clf.clf.coefs_)
         y_prob = self.clf.predict_prob(img)
         y_pred = self.clf.predict(img)
         if DEBUG:
