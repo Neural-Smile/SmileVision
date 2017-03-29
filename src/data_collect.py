@@ -196,7 +196,8 @@ from sklearn.preprocessing import StandardScaler
 scaler = StandardScaler()
 
 pca = PCA(n_components=PCA_N_COMPONENTS, whiten=True, svd_solver='randomized').fit(X_train)
-eigenfaces = pca.components_.reshape((PCA_N_COMPONENTS, processed_width, processed_height))
+n_components = min(PCA_N_COMPONENTS, pca.components_.shape[0])
+eigenfaces = pca.components_.reshape((n_components, processed_height, processed_width))
 x_train = pca.transform(X_train)
 x_test = pca.transform(X_test)
 scaler = StandardScaler()
