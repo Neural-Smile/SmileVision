@@ -1,10 +1,10 @@
 ## GLOBALS / CONSTANTS ##
-PCA_N_COMPONENTS = 150
+PCA_N_COMPONENTS = 100
 MLP_ID = 1
 SVM_ID = 2
 NO_MATCH = "no_match"
-DEBUG = True
-USE_CACHED_MODEL = True
+DEBUG = False
+USE_CACHED_MODEL = False
 SMILE_DATASET_PATH = "data/smile_home"
 PREPROCESSOR_CACHE_PATH = "data/preprocessor_cache"
 

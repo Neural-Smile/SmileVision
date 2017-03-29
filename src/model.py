@@ -4,7 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.metrics import classification_report
 from sklearn.metrics import confusion_matrix
-from sklearn.decomposition import RandomizedPCA
+from sklearn.decomposition import PCA
 from config import *
 import os.path
 import pickle
@@ -34,14 +34,15 @@ class Model(object):
 
     def get_pca_for(self, X_train):
         if self.pca is None:
-            self.pca =  RandomizedPCA(n_components=PCA_N_COMPONENTS, whiten=True).fit(X_train)
+            self.pca = PCA(n_components=PCA_N_COMPONENTS, whiten=True, svd_solver='randomized').fit(X_train)
         return self.pca
 
     def get_face_embeddings(self, faces):
         pca = self.get_pca_for(faces)
-        from IPython import embed
-        embed()
-        pca.components_.reshape((PCA_N_COMPONENTS, processed_height, processed_width))
+        n_components = min(PCA_N_COMPONENTS, pca.components_.shape[0])
+        if n_components != PCA_N_COMPONENTS:
+            print("WARNING: COULD NOT DECOMPOSE INTO {} COMPONENTS. USING {} INSTEAD.".format(PCA_N_COMPONENTS, n_components))
+        pca.components_.reshape((n_components, processed_height, processed_width))
         embeddings = pca.transform(faces)
         return embeddings
 
@@ -112,18 +113,15 @@ class Model(object):
         with open(pca, 'rb') as f:
             self.pca = pickle.load(f)
 
-    ## image is formatted and processed correctly by this point
     def verify(self, img):
-        helpers.save_image(img)
         y_prob = self.clf.predict_prob(img)
-        if self.has_match(y_prob):
-            identity = self.clf.predict(img)
-            if len(identity) > 1:
-                return False, False
-            name = self.target_names[identity[0]]
-            prob = y_prob[0][identity[0]]
-            return prob, name
-        return False, False
+        identity = self.clf.predict(img)
+        if len(identity) > 1:
+            return False, False
+        print(identity)
+        name = self.target_names[identity[0]]
+        prob = y_prob[0][identity[0]]
+        return prob, name
 
     def train(self, img, name):
        self.clf.train(img, name)
@@ -140,8 +138,6 @@ class Model(object):
         y_prob = self.clf.predict_prob(x_test)
         for i in range(y_prob.shape[0]):
             print(self.confidence_title(y_pred, y_prob, target_names, i))
-            if(not self.has_match(y_prob[i])):
-                print("SHOULD BE NEW PERSON")
 
     def eval_validation(self, x_test, y_test, target_names):
         y_pred = self.clf.predict(x_test)

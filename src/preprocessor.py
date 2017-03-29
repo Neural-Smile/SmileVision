@@ -101,24 +101,40 @@ class Preprocessor(object):
 
         for (dirpath, dirnames, filenames) in os.walk(path):
             for f in filenames:
+                if not f.endswith(".png"):
+                    continue
                 p = dirpath + "/" + f
                 images.append(cv2.imread(p))
             break
         return images
 
     def get_smile_data(self):
-        known_identities = ["Hormoz_Kheradmand", "Colin_Armstrong"] # TODO: replace with a directory walker
+        known_labels = {
+            0: "Hormoz_Kheradmand",
+            1: "Colin_Armstrong",
+            2: "Djordje_Malesevic"
+        }
+
         people = []
         images = []
-        for identity in known_identities:
-            identity_picset = self.load_smile_picset(identity)
-            images += identity_picset
-            people += [identity for _ in range(len(identity_picset))]
-        people = np.array(people)
+        labels = []
+
+        for label in sorted(known_labels.keys()):
+            person = known_labels[label]
+            people.append(person)
+
+            label_picset = self.load_smile_picset(person)
+            images += label_picset
+            labels += [label for _ in range(len(label_picset))]
+
+        labels = np.array(labels)
         images = np.array(images)
+        people = np.array(people)
+
         images, not_found = self.process_raw_images(images)
-        people = np.delete(people, not_found)
-        return images, people, people
+        labels = np.delete(labels, not_found)
+
+        return images, labels, people
 
     def get_lfw_data(self):
         people = fetch_lfw_people('./data', resize=1.0, funneled=False, min_faces_per_person=config['min_faces'])
