@@ -102,9 +102,9 @@ def test_case(param, values, n_classes, x_train, y_train, x_test, y_test, data_n
     save_test_stats(stats, data_name)
     max_y2 = float(max(y2))
     y2 = list(map(lambda x: x/max_y2, y2))
-    save_graph(x, y1, y2, param, values, data_name)
+    #save_graph(x, y1, y2, param, values, data_name)
     print("Best %s: %s\nAccuracy %s" % (param, best_val, best_acc))
-    return best_val
+    return y1
 
 
 def test_no_match(x_train, y_train, x_test, param, values, data_name, other_args = {}):
@@ -141,6 +141,18 @@ def save_graph(x, y1, y2, param, values, data_name):
     line1, = ax.plot(x, y1, '-', label='Accuracy')
     plt.xticks(x, xTicks)
     line2, = ax.plot(x, y2, '-', label='Loss')
+    ax.legend(loc = 'lower right')
+    ax.set_xlabel(param)
+    fig.autofmt_xdate(rotation=80)
+    #plt.show()
+    plt.savefig("data/graphs/" + "%s.png" % (data_name))
+
+def multi_lines_graph(x, ys, labels, param, values, data_name):
+    xTicks = [str(values[i]) for i in range(len(x))]
+    fig, ax = plt.subplots()
+    plt.xticks(x, xTicks)
+    for i in range(len(labels)):
+        line, = ax.plot(x, ys[i], '-', label=labels[i])
     ax.legend(loc = 'lower right')
     ax.set_xlabel(param)
     fig.autofmt_xdate(rotation=80)
@@ -214,6 +226,21 @@ print("N Samples: ", x_train.shape)
 print("N Test: ", x_test.shape)
 print("PCA_N: %s, N_COMP: %s" % (PCA_N,n_components))
 
+""" MULTI LINE GRAPH FOR MLP SIZE FIND"""
+ys = []
+labels = []
+values = range(1,30)
+x = np.array(range(len(values)))
+for i in range(10,100,10):
+    y = test_case("hidden_layer_sizes", [(i,j) for j in values], n_classes, x_train, y_train, x_test, y_test, "POS_mlp(100, 1-30", other_args = {'alpha': 1.1, 'beta_1': 0.9, 'learning_rate': 'constant', 'max_iter' : 3000, 'batch_size' : 80, 'learning_rate_init':0.003})
+    ys.append(y)
+    labels.append("n=%s" % i)
+
+multi_lines_graph(x, ys, labels, "hidden_layer_sizes", values, "arch")
+
+
+
+
 ## This is grabbing img/target_label_name for single person
 #new_person_imgs, target_labels = p.load_test_data("data/Nikola")
 #np_imgs = pca.transform(new_person_imgs)
@@ -233,7 +260,7 @@ print("PCA_N: %s, N_COMP: %s" % (PCA_N,n_components))
 #best_val = test_case("learning_rate_init", [0.0001, 0.001, 0.005, 0.01, 0.05, 0.1, 1, 2], n_classes, x_train, y_train, x_test, y_test, "POS_mlplearnrate[0.0001-2]", other_args = {'hidden_layer_sizes':(20,8), 'alpha': 1.1, 'beta_1': 0.9, 'learning_rate': 'constant', 'max_iter' : 3000, 'batch_size' : 80}) #0.003
 #best_val = test_case("learning_rate_init", [0.0009, 0.001, 0.002, 0.003], n_classes, x_train, y_train, x_test, y_test, "POS_mlplearnrate[0.0009-0.003]", other_args = {'hidden_layer_sizes':(20,8), 'alpha': 1.1, 'beta_1': 0.9, 'learning_rate': 'constant', 'max_iter' : 3000, 'batch_size' : 80}) #0.003
 
-best_val = test_case("hidden_layer_sizes", [(100,i) for i in range(1,30)], n_classes, x_train, y_train, x_test, y_test, "POS_mlp(100, 1-30", other_args = {'alpha': 1.1, 'beta_1': 0.9, 'learning_rate': 'constant', 'max_iter' : 3000, 'batch_size' : 80, 'learning_rate_init':0.003}) # 10,14 and then leveled out
+#best_val = test_case("hidden_layer_sizes", [(100,i) for i in range(1,30)], n_classes, x_train, y_train, x_test, y_test, "POS_mlp(100, 1-30", other_args = {'alpha': 1.1, 'beta_1': 0.9, 'learning_rate': 'constant', 'max_iter' : 3000, 'batch_size' : 80, 'learning_rate_init':0.003}) # 10,14 and then leveled out
 
 #best_val = test_case("hidden_layer_sizes", [(i,5) for i in range(1,100,2)], n_classes, x_train, y_train, x_test, y_test, "POS_mlp(1-100, 5)", other_args = {'alpha': 1.1, 'beta_1': 0.9, 'learning_rate': 'constant', 'max_iter' : 3000, 'batch_size' : 80, 'learning_rate_init':0.003}) # 10,14 and then leveled out
 #test_case("hidden_layer_sizes", [(i,best_val) for i in range(2,60,2)], n_classes, x_train, y_train, x_test, y_test, "POS_mlp(2-60, best)", other_args = {'alpha': 1.1, 'beta_1': 0.9, 'learning_rate': 'constant', 'max_iter' : 3000, 'batch_size' : 80})
