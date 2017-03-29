@@ -1,10 +1,11 @@
+from dev_config import *
 ## GLOBALS / CONSTANTS ##
 PCA_N_COMPONENTS = 100
 MLP_ID = 1
 SVM_ID = 2
 NO_MATCH = "no_match"
-DEBUG = True
-USE_CACHED_MODEL = False
+DEBUG = DEV_DEBUG # this is ghetto sorry
+USE_CACHED_MODEL = True
 SMALL_MODEL = True
 SMILE_DATASET_PATH = "data/smile_home"
 SMALL_DATA_PATH = "data/smile_home"

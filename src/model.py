@@ -154,10 +154,11 @@ class Model(object):
 
     def initialize_and_test(self):
         self.initialize()
-        (X_train, X_test, y_train, y_test, target_names) = self.get_data()
-        X_test_pca = self.get_face_embeddings(X_test)
-        prediction_titles = self.eval_validation(X_test_pca, y_test, target_names)
-        plot_gallery(X_test, prediction_titles, processed_height, processed_width, 6, 4)
+        if DEBUG:
+            (X_train, X_test, y_train, y_test, target_names) = self.get_data()
+            X_test_pca = self.get_face_embeddings(X_test)
+            prediction_titles = self.eval_validation(X_test_pca, y_test, target_names)
+            plot_gallery(X_test, prediction_titles, processed_height, processed_width, 6, 4)
 
 
 def plot_gallery(images, titles, h, w, n_row=3, n_col=4):

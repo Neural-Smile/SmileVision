@@ -145,11 +145,20 @@ class Preprocessor(object):
         return images, target, target_names
 
     def get_data(self):
-        if SMALL_MODEL:
-            print("Using training data from small dataset")
-            X, y, target_names = self.get_small_data()
-        else:
-            print("Using training data from sklearn")
-            X, y, target_names = self.get_lfw_data()
+        X, y, target_names = self.get_small_data()
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25)
+
+        X_unknown, y_unknown, target_names_u = self.get_lfw_data()
+
+        y_unknown[:] = 3
+        target_names_u = np.array(["No_Match"])
+
+        X_train = np.concatenate((X_train, X_unknown))
+        y_train = np.concatenate((y_train, y_unknown))
+        target_names = np.concatenate((target_names, target_names_u))
+
+        indices = np.arange(len(X_train))
+        np.random.RandomState(42).shuffle(indices)
+        X_train, y_train = X_train[indices], y_train[indices]
+
         return X_train, X_test, y_train, y_test, target_names
