@@ -11,7 +11,6 @@ from config import *
 ## CLASSIFIERS ###
 ##################
 
-## SUPPORT VECTOR MACHINE ##
 class SVM:
     def __init__(self, search=False, param_grid = []):
         self.search = search
@@ -48,7 +47,6 @@ class SVM:
         return "SVM"
 
 
-## MULTI-LAYER PERCEPTRON ##
 class MLP:
     def __init__(self, search=False, param_grid = []):
         self.search = search
@@ -85,10 +83,7 @@ class MLP:
     def cache_string(self):
         return "MLP"
 
-########################## ....
-## CLASSIFIER SELECTION ##    .
-##########################    v
-clf_menu = {
+clf_classes = {
     1 : MLP,
     2 : SVM
 }
@@ -96,6 +91,6 @@ clf_menu = {
 def choose_clf(choice, args = None):
     #TODO: double check i'm expanding this right
     if args:
-        return clf_menu[choice](**args)
+        return clf_classes[choice](**args)
     else:
-        return clf_menu[choice]()
+        return clf_classes[choice]()

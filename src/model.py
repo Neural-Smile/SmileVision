@@ -56,12 +56,12 @@ class Model(object):
         self.train(X_train_embeddings, y_train)
         self.save_model(self.cache_path())
 
-    def initialize(self):
-        if self.initialized:
+    def initialize(self, force=False):
+        if self.initialized and not force:
             return
 
         print("Initializing model")
-        if USE_CACHED_MODEL and self.cached_files_present():
+        if not force and USE_CACHED_MODEL and self.cached_files_present():
             self.initialize_from_cache()
         else:
             data = self.get_data()
@@ -112,17 +112,16 @@ class Model(object):
         with open(pca, 'rb') as f:
             self.pca = pickle.load(f)
 
-    def verify(self, img):
-        y_prob = self.clf.predict_prob(img)
-        y_pred = self.clf.predict(img)
-        if DEBUG:
-            print("Predicted: %s\n Confidence: %s" % (self.target_names[y_pred], y_prob[0][y_pred]))
+    def verify(self, embedding):
+        y_prob = self.clf.predict_prob(embedding)
+        y_pred = self.clf.predict(embedding)
+        print("Predicted: %s\n Confidence: %s" % (self.target_names[y_pred], y_prob[0][y_pred]))
         if self.has_match(y_prob):
             return self.target_names[y_pred][0]
         return NO_MATCH
 
-    def train(self, img, name):
-       self.clf.train(img, name)
+    def train(self, embeddings, labels):
+       self.clf.train(embeddings, labels)
 
     def confidence_title(self, y_pred, y_prob, target_names, i):
         pred_name = target_names[y_pred[i]].rsplit(' ', 1)[-1]
