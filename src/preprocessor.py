@@ -145,6 +145,10 @@ class Preprocessor(object):
         return X, y, target_names
 
     def get_data(self):
-        X, y, target_names = self.get_smile_data()
+        X, y, target_names = None, None, None
+        if SMALL_MODEL:
+            X, y, target_names = self.get_smile_data()
+        else:
+            X, y, target_names = self.geet_lfw_data()
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25)
         return X_train, X_test, y_train, y_test, target_names

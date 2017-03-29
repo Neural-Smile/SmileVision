@@ -5,6 +5,7 @@ SVM_ID = 2
 NO_MATCH = "no_match"
 DEBUG = False
 USE_CACHED_MODEL = False
+SMALL_MODEL = True
 SMILE_DATASET_PATH = "data/smile_home"
 PREPROCESSOR_CACHE_PATH = "data/preprocessor_cache"
 

@@ -115,13 +115,9 @@ class Model(object):
 
     def verify(self, img):
         y_prob = self.clf.predict_prob(img)
-        identity = self.clf.predict(img)
-        if len(identity) > 1:
-            return False, False
-        print(identity)
-        name = self.target_names[identity[0]]
-        prob = y_prob[0][identity[0]]
-        return prob, name
+        if self.has_match(y_prob):
+            return self.target_names[self.clf.predict(img)]
+        return NO_MATCH
 
     def train(self, img, name):
        self.clf.train(img, name)

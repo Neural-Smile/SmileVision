@@ -24,12 +24,7 @@ class SmileLocal(object):
 
     def process_face(self, face):
         embedding = self.model.get_face_embeddings(np.array([face]))
-        certainty, name = self.model.verify(embedding)
-        print(certainty, name)
-        if name:
-            print("{} with probability : {}".format(name, certainty))
-        else:
-            print "no match"
+        print(self.model.verify(embedding))
 
     def run(self):
         while True:
