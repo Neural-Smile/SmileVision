@@ -151,5 +151,5 @@ class Preprocessor(object):
         else:
             print("Using training data from sklearn")
             X, y, target_names = self.get_lfw_data()
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20)
         return X_train, X_test, y_train, y_test, target_names

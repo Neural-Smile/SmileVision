@@ -104,6 +104,7 @@ def test_case(param, values, n_classes, x_train, y_train, x_test, y_test, data_n
     y2 = list(map(lambda x: x/max_y2, y2))
     save_graph(x, y1, y2, param, values, data_name)
     print("Best %s: %s\nAccuracy %s" % (param, best_val, best_acc))
+    return best_val
 
 
 def test_no_match(x_train, y_train, x_test, param, values, data_name, other_args = {}):
@@ -188,31 +189,40 @@ def verify_img(clf, img, label=None, target_names=None):
 
 
 p = Preprocessor()
-X_train, X_test, y_train, y_test, target_names = p.get_data()
+x_train, x_test, y_train, y_test, target_names = p.get_data()
 print("LOADED DATA")
 n_classes = target_names.shape[0]
 
+
 from sklearn.preprocessing import StandardScaler
 scaler = StandardScaler()
-
-pca = PCA(n_components=PCA_N_COMPONENTS, whiten=True, svd_solver='randomized').fit(X_train)
-n_components = min(PCA_N_COMPONENTS, pca.components_.shape[0])
+PCA_N = 120
+#pca = PCA(n_components=PCA_N_COMPONENTS, whiten=True, svd_solver='randomized').fit(X_train)
+pca = PCA(n_components=PCA_N, whiten=True, svd_solver='randomized').fit(x_train)
+#n_components = min(PCA_N_COMPONENTS, pca.components_.shape[0])
+n_components = min(PCA_N, pca.components_.shape[0])
 eigenfaces = pca.components_.reshape((n_components, processed_height, processed_width))
-x_train = pca.transform(X_train)
-x_test = pca.transform(X_test)
-scaler = StandardScaler()
-scaler.fit(x_train)
-x_train = scaler.transform(x_train)
-x_test = scaler.transform(x_test)
+x_train = pca.transform(x_train)
+x_test = pca.transform(x_test)
+#scaler = StandardScaler()
+#scaler.fit(x_train)
+#x_train = scaler.transform(x_train)
+#x_test = scaler.transform(x_test)
+
+print("N Classes: ", n_classes)
+print("N Samples: ", x_train.shape)
+print("N Test: ", x_test.shape)
+print("PCA_N: %s, N_COMP: %s" % (PCA_N,n_components))
 
 ## This is grabbing img/target_label_name for single person
-new_person_imgs, target_labels = p.load_test_data("data/Nikola")
-np_imgs = pca.transform(new_person_imgs)
-np_imgs = scaler.transform(np_imgs)
+#new_person_imgs, target_labels = p.load_test_data("data/Nikola")
+#np_imgs = pca.transform(new_person_imgs)
+#np_imgs = scaler.transform(np_imgs)
 
 #test_no_match(x_train, y_train, np_imgs, "hidden_layer_sizes", [(20,i) for i in range (1,30,2)], "small_(20,1-30)", {'alpha':1.1, 'beta_1':0.9, 'learning_rate':'constant', 'max_iter':3000, 'batch_size': 80})
 #test_no_match(x_train, y_train, np_imgs, "hidden_layer_sizes", [(i,2) for i in range (3,60,4)], "small_(3-60,2)", {'alpha':1.1, 'beta_1':0.9, 'learning_rate':'constant', 'max_iter':3000, 'batch_size': 80}) #(7,2), (11,2), (47,2) all 100%
-test_no_match(x_train, y_train, np_imgs, "hidden_layer_sizes", [(i,1) for i in range (1,30)], "small_(1-30,1)", {'alpha':1.1, 'beta_1':0.9, 'learning_rate':'constant', 'max_iter':3000, 'batch_size': 80})
+#test_no_match(x_train, y_train, np_imgs, "hidden_layer_sizes", [(i,1) for i in range (1,30)], "small_(1-30,1)", {'alpha':1.1, 'beta_1':0.9, 'learning_rate':'constant', 'max_iter':3000, 'batch_size': 80})
+#test_no_match(x_train, y_train, np_imgs, "hidden_layer_sizes", [(i,1) for i in range (1,3)], "small_(1-30,1)", {'alpha':1.1, 'beta_1':0.9, 'learning_rate':'constant', 'max_iter':3000, 'batch_size': 80})
 
 
 # Drop into an ipython session to experiment
@@ -220,4 +230,10 @@ test_no_match(x_train, y_train, np_imgs, "hidden_layer_sizes", [(i,1) for i in r
 #embed()
 
 #just to keep template for quick test.. dont be upset
-#test_case("hidden_layer_sizes", [(20,i) for i in range(3,200,5)], n_classes, x_train, y_train, x_test, y_test, "hi_iter_batch_(20,3-200)", other_args = {'alpha': 1.1, 'beta_1': 0.9, 'learning_rate': 'constant', 'max_iter' : 3000, 'batch_size' : 3000})
+#best_val = test_case("learning_rate_init", [0.0001, 0.001, 0.005, 0.01, 0.05, 0.1, 1, 2], n_classes, x_train, y_train, x_test, y_test, "POS_mlplearnrate[0.0001-2]", other_args = {'hidden_layer_sizes':(20,8), 'alpha': 1.1, 'beta_1': 0.9, 'learning_rate': 'constant', 'max_iter' : 3000, 'batch_size' : 80}) #0.003
+#best_val = test_case("learning_rate_init", [0.0009, 0.001, 0.002, 0.003], n_classes, x_train, y_train, x_test, y_test, "POS_mlplearnrate[0.0009-0.003]", other_args = {'hidden_layer_sizes':(20,8), 'alpha': 1.1, 'beta_1': 0.9, 'learning_rate': 'constant', 'max_iter' : 3000, 'batch_size' : 80}) #0.003
+
+best_val = test_case("hidden_layer_sizes", [(100,i) for i in range(1,30)], n_classes, x_train, y_train, x_test, y_test, "POS_mlp(100, 1-30", other_args = {'alpha': 1.1, 'beta_1': 0.9, 'learning_rate': 'constant', 'max_iter' : 3000, 'batch_size' : 80, 'learning_rate_init':0.003}) # 10,14 and then leveled out
+
+#best_val = test_case("hidden_layer_sizes", [(i,5) for i in range(1,100,2)], n_classes, x_train, y_train, x_test, y_test, "POS_mlp(1-100, 5)", other_args = {'alpha': 1.1, 'beta_1': 0.9, 'learning_rate': 'constant', 'max_iter' : 3000, 'batch_size' : 80, 'learning_rate_init':0.003}) # 10,14 and then leveled out
+#test_case("hidden_layer_sizes", [(i,best_val) for i in range(2,60,2)], n_classes, x_train, y_train, x_test, y_test, "POS_mlp(2-60, best)", other_args = {'alpha': 1.1, 'beta_1': 0.9, 'learning_rate': 'constant', 'max_iter' : 3000, 'batch_size' : 80})
