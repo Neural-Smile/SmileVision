@@ -100,6 +100,23 @@ def save_test_stats(stats, data_name):
         for k,v in stats.items():
             print("%s: %s" % (k,v), file=f)
 
+def train_model(x_train, y_train, args):
+    mlp = MLPClassifier(**args)
+    mlp.fit(x_train, y_train)
+    return mlp
+
+def verify_img(clf, img, label, target_names):
+    print(img.shape)
+    y_prob = clf.predict_proba(img)
+    y_pred = clf.predict(img)
+    print("Predicted: %s\n Confidence: %s\n Actually: %s" % (target_names[y_pred], y_prob[0][y_pred], label))
+    if y_prob.max() > 0.85:
+        print("MATCH")
+        return "MATCH"
+    else:
+        print("NO_MATCH")
+        return "NO_MATCH"
+
 p = Preprocessor()
 X_train, X_test, y_train, y_test, target_names = p.get_data()
 print("LOADED DATA")
@@ -117,37 +134,26 @@ scaler.fit(x_train)
 x_train = scaler.transform(x_train)
 x_test = scaler.transform(x_test)
 
-scaler.fit(x_train)
-x_train = scaler.transform(x_train)
-x_test = scaler.transform(x_test)
+## This is grabbing img/target_label_name for single person
+new_person_imgs, target_labels = p.load_test_data("data/Nikola")
+np_imgs = pca.transform(new_person_imgs)
+np_imgs = scaler.transform(np_imgs)
+
+## Testing for NO_MATCH on new person
+args = {'alpha':1.1, 'beta_1':0.9, 'learning_rate':'constant', 'max_iter':3000, 'hidden_layer_sizes':(20,8), 'batch_size': 80}
+mlp = train_model(x_train, y_train, args)
+results = []
+for i in range(np_imgs.shape[0]):
+    outcome = verify_img(mlp, np_imgs[i], target_labels[i], target_names)
+    results.append(outcome)
+correct = results.count("NO_MATCH")
+accuracy = correct/float(len(results))
+strings = (correct, len(results), accuracy, target_labels[0])
+print("Correct: %s, Total: %s, Accuracy: %s, Test subject: %s" % strings)
+
 
 # Drop into an ipython session to experiment
-from IPython import embed
-embed()
+#from IPython import embed
+#embed()
 
-#test_case("hidden_layer_sizes", [(50, 3), (60, 3), (40, 4)], n_classes, x_train, y_train, x_test, y_test)
-#test_case("hidden_layer_sizes", [(40, 4), (60, 4), (40, 5), (60, 5), (40, 6), (40, 7)], n_classes, x_train, y_train, x_test, y_test)
-#test_case("hidden_layer_sizes", [(40, 7), (40, 10), (40, 12), (20, 20), (40, 20), (80, 20)], n_classes, x_train, y_train, x_test, y_test)
-#test_case("hidden_layer_sizes", [(50, 20), (40, 30), (40, 40), (40, 50), (40, 100), (40, 200)], n_classes, x_train, y_train, x_test, y_test)
-#test_case("hidden_layer_sizes", [(i, 160) for i in range(30,55)], n_classes, x_train, y_train, x_test, y_test)
-#test_case("hidden_layer_sizes", [(i, 160) for i in range(48,55)], n_classes, x_train, y_train, x_test, y_test)
-""" ok found (52, 160) to be pretty good, setting model to this """
-#test_case("alpha", [0.0001, 0.001, 0.01, 0.1, 1, 10], n_classes, x_train, y_train, x_test, y_test, other_args = {'hidden_layer_sizes': (52, 160)})
-#test_case("alpha", [1, 1.1, 1.2, 1.3, 2, 3, 4, 5], n_classes, x_train, y_train, x_test, y_test, other_args = {'hidden_layer_sizes': (52, 160)})
-"""alpha 1-1.3 all jump around same accuracy.. idk"""
-# test_case("beta_1", [0.7, 0.8, 0.9, 0.92, 0.94], n_classes, x_train, y_train, x_test, y_test, other_args = {'hidden_layer_sizes': (52, 160), 'alpha': 1.1})
-# test_case("hidden_layer_sizes", [(20,1)], n_classes, x_train, y_train, x_test, y_test)
-#test_case("beta_1", [0.7, 0.8, 0.9, 0.92, 0.94], n_classes, x_train, y_train, x_test, y_test, other_args = {'hidden_layer_sizes': (52, 160), 'alpha': 1.1})
-#test_case("beta_1", [0.88,0.89,0.9,0.91,0.92], n_classes, x_train, y_train, x_test, y_test, other_args = {'hidden_layer_sizes': (52, 160), 'alpha': 1.1})
-"""stick to beta_1 0.9"""
-#test_case("hidden_layer_sizes", [(50,160), (45, 160), (55, 160), (50, 130), (50, 190)], n_classes, x_train, y_train, x_test, y_test, other_args = {'hidden_layer_sizes': (52, 160), 'alpha': 1.1, 'beta_1': 0.9, 'learning_rate': 'adaptive'})
-#test_case("hidden_layer_sizes", [(50,130), (50, 100), (50, 50), (50, 120), (50, 125)], n_classes, x_train, y_train, x_test, y_test, other_args = {'alpha': 1.1, 'beta_1': 0.9, 'learning_rate': 'adaptive'})
-"""adaptive learning isn't doing anything for me, and very sporadic results"""
-#test_case("hidden_layer_sizes", [(50, 50),(50, 100),(50, 120), (50, 125),(50,130)], n_classes, x_train, y_train, x_test, y_test, other_args = {'alpha': 1.1, 'beta_1': 0.9, 'learning_rate': 'constant'}) ## with max_iter = 3000, batch_size = 3000
-#test_case("hidden_layer_sizes", [(i,1) for i in range(1,100,2)], n_classes, x_train, y_train, x_test, y_test, "hi_iter_batch_(i,1-100)", other_args = {'alpha': 1.1, 'beta_1': 0.9, 'learning_rate': 'constant', 'max_iter' : 3000, 'batch_size' : 3000}) #0 variance in acc basically
-#test_case("hidden_layer_sizes", [(i,3) for i in range(1,500,10)], n_classes, x_train, y_train, x_test, y_test, "hi_iter_batch_(i,1-500)", other_args = {'alpha': 1.1, 'beta_1': 0.9, 'learning_rate': 'constant', 'max_iter' : 3000, 'batch_size' : 3000})
-#test_case("hidden_layer_sizes", [(20,i) for i in range(3,200,5)], n_classes, x_train, y_train, x_test, y_test, "hi_iter_batch_(20,3-200)", other_args = {'alpha': 1.1, 'beta_1': 0.9, 'learning_rate': 'constant', 'max_iter' : 3000, 'batch_size' : 3000}) # jumped around 37-40% after 8 layers
-"""lets try to mess with batch size"""
-#test_case("batch_size", [i for i in range(10, 2000,25)], n_classes, x_train, y_train, x_test, y_test, "batchsize[10-2000](20,8)", other_args = {'alpha': 1.1, 'beta_1': 0.9, 'learning_rate': 'constant', 'max_iter' : 3000, 'hidden_layer_size': (20,8)}) # batch size 80-100 was giving 80-100 acc
-"""again hidden layer sizes (20,8) was found to be best with batch size 80"""
-# test_case("batch_size", [i for i in range(10, 2000,25)], n_classes, x_train, y_train, x_test, y_test, "batchsize[10-2000](20,8)", other_args = {'alpha':1.1, 'beta_1':0.9, 'learning_rate':'constant', 'max_iter':3000, 'hidden_layer_size':(20,8), 'batch_size':80})
+#test_case("hidden_layer_sizes", [(20,i) for i in range(3,200,5)], n_classes, x_train, y_train, x_test, y_test, "hi_iter_batch_(20,3-200)", other_args = {'alpha': 1.1, 'beta_1': 0.9, 'learning_rate': 'constant', 'max_iter' : 3000, 'batch_size' : 3000})

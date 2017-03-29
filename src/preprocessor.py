@@ -101,6 +101,21 @@ class Preprocessor(object):
         target_names = people.target_names
         return X, y, target_names
 
+    ## for one person
+    def load_test_data(self, dir_path):
+        if not isdir(dir_path):
+            return None, None
+        label = dir_path.split('/')[-1] #name of person
+        paths = [join(dir_path, f) for f in listdir(dir_path)]
+        n_pictures = len(paths)
+        images = []
+        for p in paths:
+            images.append(cv2.imread(p))
+        images = np.array(images)
+        target_labels = np.array([label for i in range(n_pictures)])
+        images, not_found = self.process_raw_images(images)
+        target_labels = np.delete(target_labels, not_found)
+        return images, target_labels
 
     def get_small_data(self):
         person_names, file_paths = [], []
@@ -131,8 +146,10 @@ class Preprocessor(object):
 
     def get_data(self):
         if SMALL_MODEL:
+            print("Using training data from small dataset")
             X, y, target_names = self.get_small_data()
         else:
+            print("Using training data from sklearn")
             X, y, target_names = self.get_lfw_data()
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25)
         return X_train, X_test, y_train, y_test, target_names

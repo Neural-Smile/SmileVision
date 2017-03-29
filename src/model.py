@@ -29,7 +29,6 @@ class Model(object):
             print("Using training data from DB")
             return self.preprocessor.data_from_db()
         else:
-            print("Using training data from sklearn")
             return self.preprocessor.get_data()
 
     def get_pca_for(self, X_train):
@@ -131,7 +130,7 @@ class Model(object):
         return 'predicted: %s\nconfidence:     %s'%(pred_name, confidence)
 
     def has_match(self, y_prob):
-        return y_prob.max() > 0.6
+        return y_prob.max() > 0.85
 
     def display_confidence(self, x_test, y_pred, target_names):
         y_prob = self.clf.predict_prob(x_test)
