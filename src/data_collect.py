@@ -210,8 +210,9 @@ new_person_imgs, target_labels = p.load_test_data("data/Nikola")
 np_imgs = pca.transform(new_person_imgs)
 np_imgs = scaler.transform(np_imgs)
 
-other_args = {'alpha':1.1, 'beta_1':0.9, 'learning_rate':'constant', 'max_iter':3000, 'hidden_layer_sizes':(20,8), 'batch_size': 80}
-test_no_match(x_train, y_train, np_imgs, "hidden_layer_sizes", [(20,i) for i in range (1,30,2)], "small_(20,1-30)", other_args)
+#test_no_match(x_train, y_train, np_imgs, "hidden_layer_sizes", [(20,i) for i in range (1,30,2)], "small_(20,1-30)", {'alpha':1.1, 'beta_1':0.9, 'learning_rate':'constant', 'max_iter':3000, 'batch_size': 80})
+#test_no_match(x_train, y_train, np_imgs, "hidden_layer_sizes", [(i,2) for i in range (3,60,4)], "small_(3-60,2)", {'alpha':1.1, 'beta_1':0.9, 'learning_rate':'constant', 'max_iter':3000, 'batch_size': 80}) #(7,2), (11,2), (47,2) all 100%
+test_no_match(x_train, y_train, np_imgs, "hidden_layer_sizes", [(i,1) for i in range (1,30)], "small_(1-30,1)", {'alpha':1.1, 'beta_1':0.9, 'learning_rate':'constant', 'max_iter':3000, 'batch_size': 80})
 
 
 # Drop into an ipython session to experiment

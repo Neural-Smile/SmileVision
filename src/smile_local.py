@@ -40,6 +40,9 @@ class SmileLocal(object):
     def initialize_and_test(self):
         self.model.initialize_and_test()
 
+    def initialize(self):
+        self.model.initialize()
+
     def cleanup(self):
         self.camera.release()
         cv2.destroyAllWindows()
@@ -56,7 +59,7 @@ class SmileLocal(object):
 def main():
     l = SmileLocal()
     try:
-        l.initialize_and_test()
+        l.initialize()
         l.run()
     finally:
         l.cleanup()

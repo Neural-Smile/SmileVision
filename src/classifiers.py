@@ -54,14 +54,15 @@ class MLP:
         self.search = search
         self.param_grid = param_grid
         #TODO: param passing, default for now
-        param_grid = {'hidden_layer_sizes' : [(50, 3)], 'alpha' : [0.1, 1, 10]}
-        topology = (215, 90, 160, 10)
         if self.search:
             self.clf = GridSearchCV(
                 MLPClassifier(activation="relu", solver="adam"), param_grid)
         else:
             #TODO: passing params
-            self.clf = MLPClassifier(hidden_layer_sizes=topology, activation="relu", solver="adam")
+            if SMALL_MODEL:
+                self.clf = MLPClassifier(activation="relu", solver="adam", **BEST_SMALL_MODEL)
+            else:
+                self.clf = MLPClassifier(activation="relu", solver="adam", **BEST_MODEL)
 
 
     def train(self, x_train, y_train):

@@ -8,6 +8,7 @@ from sklearn.decomposition import PCA
 from config import *
 import os.path
 import pickle
+from sklearn.preprocessing import StandardScaler
 
 # Interface between the server/local helper and the neural network
 class Model(object):
@@ -53,6 +54,8 @@ class Model(object):
         (X_train, X_test, y_train, y_test, target_names) = data
         self.target_names = target_names
         X_train_embeddings = self.get_face_embeddings(X_train)
+        scaler = StandardScaler()
+        scaler.fit(X_train_embeddings)
         self.train(X_train_embeddings, y_train)
         self.save_model(self.cache_path())
 
@@ -113,6 +116,8 @@ class Model(object):
             self.pca = pickle.load(f)
 
     def verify(self, img):
+        print(self.clf.clf.get_params())
+        print(self.clf.clf.coefs_)
         y_prob = self.clf.predict_prob(img)
         y_pred = self.clf.predict(img)
         if DEBUG:
@@ -156,6 +161,8 @@ class Model(object):
         self.initialize()
         (X_train, X_test, y_train, y_test, target_names) = self.get_data()
         X_test_pca = self.get_face_embeddings(X_test)
+        scaler = StandardScaler()
+        scaler.fit(X_test_pca)
         prediction_titles = self.eval_validation(X_test_pca, y_test, target_names)
         plot_gallery(X_test, prediction_titles, processed_height, processed_width, 6, 4)
 
