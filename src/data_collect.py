@@ -106,15 +106,14 @@ def train_model(x_train, y_train, args):
     return mlp
 
 def verify_img(clf, img, label, target_names):
-    print(img.shape)
+    #just to get rid of unsuppressable stupid sklearn warnings
+    img = img.reshape(1, -1)
     y_prob = clf.predict_proba(img)
     y_pred = clf.predict(img)
     print("Predicted: %s\n Confidence: %s\n Actually: %s" % (target_names[y_pred], y_prob[0][y_pred], label))
     if y_prob.max() > 0.85:
-        print("MATCH")
         return "MATCH"
     else:
-        print("NO_MATCH")
         return "NO_MATCH"
 
 p = Preprocessor()
