@@ -119,8 +119,8 @@ class Preprocessor(object):
 
     def get_small_data(self):
         person_names, file_paths = [], []
-        for person_name in sorted(listdir(SMALL_DATA_PATH)):
-            folder_path = join(SMALL_DATA_PATH, person_name)
+        for person_name in sorted(listdir(SMILE_DATA_PATH)):
+            folder_path = join(SMILE_DATA_PATH, person_name)
             if not isdir(folder_path):
                 continue
             paths = [join(folder_path, f) for f in listdir(folder_path)]
@@ -148,15 +148,17 @@ class Preprocessor(object):
         X, y, target_names = self.get_small_data()
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25)
 
+        y_train += 1
+        y_test += 1
+
         X_unknown, y_unknown, target_names_u = self.get_lfw_data()
 
-        y_unknown[:] = 3
-        target_names_u = np.array(["No_Match"])
+        y_unknown[:] = 0
+        target_names_u = np.array([NO_MATCH])
 
         X_train = np.concatenate((X_train, X_unknown))
         y_train = np.concatenate((y_train, y_unknown))
-        target_names = np.concatenate((target_names, target_names_u))
-
+        target_names = np.concatenate((target_names_u, target_names))
         indices = np.arange(len(X_train))
         np.random.RandomState(42).shuffle(indices)
         X_train, y_train = X_train[indices], y_train[indices]

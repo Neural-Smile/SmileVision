@@ -1,21 +1,17 @@
 #!/usr/bin/python
 from BaseHTTPServer import BaseHTTPRequestHandler,HTTPServer
-from preprocessor import Preprocessor
-from model import Model
+from smile_local import SmileLocal
 import numpy as np
 import base64
 import cv2
 import cgi
 import urlparse
+from config import *
 
 PORT_NUMBER = 3001
 
-# This server parses base64 encoded png images and runs them
-# through the preprocessor and the verifier and should eventually
-# be able to recognize identities
 class VisionHandler(BaseHTTPRequestHandler):
-    preprocessor = None
-    model = None
+    local = None
 
 
     def img_from_b64(self, b64_str):
@@ -25,57 +21,54 @@ class VisionHandler(BaseHTTPRequestHandler):
 
 
     def get_fields(self):
-        return urlparse.parse_qs(self.path.split('?')[1])
-
-
-    def read_img(self, fields):
-        b64_str= fields['image'][0]
-        return self.img_from_b64(b64_str)
+        ctype, pdict = cgi.parse_header(self.headers.getheader('content-type'))
+        if ctype == 'multipart/form-data':
+            postvars = cgi.parse_multipart(self.rfile, pdict)
+        elif ctype == 'application/x-www-form-urlencoded':
+            length = int(self.headers.getheader('content-length'))
+            postvars = cgi.parse_qs(self.rfile.read(length), keep_blank_values=1)
+        else:
+            postvars = {}
+        return postvars
 
 
     def verify_img(self):
         fields = self.get_fields()
-        img = self.read_img(fields)
-        processed = self.preprocessor.process(img)
-        ## to conform to same size/ratio across all inputs
-        processed = self.preprocessor.resize(processed) 
-        if len(processed) > 1:
-            print("multiple faces")
-        identity = self.model.verify(processed[0])
+        img = self.img_from_b64(fields['image'][0])
+        identity = self.local.process_frame(img)
+        if identity is None or identity == 'No_Match':
+            identity = NO_MATCH
         return identity
-
 
     def train(self):
         fields = self.get_fields()
-        img = self.read_img(fields)
-        processed = self.preprocessor.process(img)
-        ## to conform to same size/ratio across all inputs
-        processed = self.preprocessor.resize(processed) 
-        model.train(processed, fields['label'])
-        return 200
+        identity = fields['identity'][0]
+        train_imgs = list(map(lambda x: self.img_from_b64(x), fields['images']))
+        self.local.train_new_identity(identity, train_imgs)
+        return True
 
 
     def do_POST(self):
-        print("POST request")
-        #TODO: need to parse endpoint, separate from params
-
         if self.path.startswith("/verify"):
-            print("VERIFY request")
             identity = self.verify_img()
             self.send_response(200)
+            self.end_headers()
             self.wfile.write(identity)
 
         if self.path.startswith("/train"):
-            print("TRAIN request")
             resp = self.train()
-            self.send_response(resp)
+            self.send_response(200)
+            if resp:
+                self.wfile.write("success")
+            else:
+                self.wfile.write("failure")
 
 
 try:
-    VisionHandler.preprocessor = Preprocessor()
-    model = Model(VisionHandler.preprocessor)
-    model.initialize()
-    VisionHandler.model = model
+    l = SmileLocal()
+    l.initialize_and_test()
+
+    VisionHandler.local = l
     server = HTTPServer(('0.0.0.0', PORT_NUMBER), VisionHandler)
     print 'Started httpserver on port ' , PORT_NUMBER
     server.serve_forever()

@@ -6,8 +6,9 @@ from sklearn.metrics import classification_report
 from sklearn.metrics import confusion_matrix
 from sklearn.decomposition import PCA
 from config import *
-import os.path
+import numpy as np
 import pickle
+import os
 
 # Interface between the server/local helper and the neural network
 class Model(object):
@@ -112,17 +113,33 @@ class Model(object):
         with open(pca, 'rb') as f:
             self.pca = pickle.load(f)
 
-    def verify(self, img):
-        y_prob = self.clf.predict_prob(img)
-        y_pred = self.clf.predict(img)
-        if DEBUG:
-            print("Predicted: %s\n Confidence: %s" % (self.target_names[y_pred], y_prob[0][y_pred]))
+    def verify(self, embedding):
+        y_prob = self.clf.predict_prob(embedding)
+        y_pred = self.clf.predict(embedding)
+        import pdb; pdb.set_trace()
+        print("Predicted: %s\n Confidence: %s" % (self.target_names[y_pred], y_prob[0][y_pred]))
         if self.has_match(y_prob):
             return self.target_names[y_pred][0]
         return NO_MATCH
 
-    def train(self, img, name):
-       self.clf.train(img, name)
+    def train(self, embeddings, labels):
+       self.clf.train(embeddings, labels)
+
+    def train_new_identity(self, identity, imgs):
+        faces = []
+        processed = np.array(map(lambda img: self.preprocessor.process(img), imgs))
+        for p in processed:
+            if len(p) == 1:
+                faces.append(p[0])
+
+        embeddings = self.get_face_embeddings(faces)
+        labels = [len(self.target_names) for _ in range(len(embeddings))]
+        self.target_names = np.append(self.target_names, [identity])
+
+        self.train(embeddings, labels)
+        self.save_model()
+
+        return True
 
     def confidence_title(self, y_pred, y_prob, target_names, i):
         pred_name = target_names[y_pred[i]].rsplit(' ', 1)[-1]

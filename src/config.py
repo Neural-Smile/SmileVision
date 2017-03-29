@@ -7,8 +7,7 @@ NO_MATCH = "no_match"
 DEBUG = DEV_DEBUG # this is ghetto sorry
 USE_CACHED_MODEL = True
 SMALL_MODEL = True
-SMILE_DATASET_PATH = "data/smile_home"
-SMALL_DATA_PATH = "data/smile_home"
+SMILE_DATA_PATH = "data/smile_home"
 PREPROCESSOR_CACHE_PATH = "data/preprocessor_cache"
 
 ## these are supposed to be standard dimensions of img
