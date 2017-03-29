@@ -108,8 +108,8 @@ n_classes = target_names.shape[0]
 from sklearn.preprocessing import StandardScaler
 scaler = StandardScaler()
 
-pca = RandomizedPCA(n_components=200, whiten=True).fit(X_train)
-eigenfaces = pca.components_.reshape((200, 50, 37))
+pca = PCA(n_components=PCA_N_COMPONENTS, whiten=True, svd_solver='randomized').fit(X_train)
+eigenfaces = pca.components_.reshape((PCA_N_COMPONENTS, processed_width, processed_height))
 x_train = pca.transform(X_train)
 x_test = pca.transform(X_test)
 scaler = StandardScaler()

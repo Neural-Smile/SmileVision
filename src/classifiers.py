@@ -13,7 +13,7 @@ from config import *
 
 ## SUPPORT VECTOR MACHINE ##
 class SVM:
-    def __init__(self, search=True, param_grid = []):
+    def __init__(self, search=False, param_grid = []):
         self.search = search
         self.param_grid = param_grid
         #TODO: param passing, default for now
@@ -21,10 +21,10 @@ class SVM:
                  'gamma': [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.1], }
         if search:
             self.clf = GridSearchCV(
-                SVC(kernel='rbf', class_weight='balanced'), param_grid)
+                SVC(kernel='rbf', class_weight='balanced', probability=True), param_grid)
         else:
             #TODO: passing params
-            self.clf = SVC(kernel='rbf', class_weight='balanced')
+            self.clf = SVC(kernel='rbf', class_weight='balanced', probability=True)
 
 
     def train(self, x_train, y_train):
@@ -50,17 +50,18 @@ class SVM:
 
 ## MULTI-LAYER PERCEPTRON ##
 class MLP:
-    def __init__(self, search=True, param_grid = []):
+    def __init__(self, search=False, param_grid = []):
         self.search = search
         self.param_grid = param_grid
         #TODO: param passing, default for now
         param_grid = {'hidden_layer_sizes' : [(50, 3)], 'alpha' : [0.1, 1, 10]}
+        topology = (215, 90, 160, 10)
         if self.search:
             self.clf = GridSearchCV(
                 MLPClassifier(activation="relu", solver="adam"), param_grid)
         else:
             #TODO: passing params
-            self.clf = MLPClassifier(activation="relu", solver="adam")
+            self.clf = MLPClassifier(hidden_layer_sizes=topology, activation="relu", solver="adam")
 
 
     def train(self, x_train, y_train):
