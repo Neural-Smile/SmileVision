@@ -7,7 +7,8 @@ import cv2
 from config import *
 import os
 import hashlib
-
+from os import listdir
+from os.path import join, exists, isdir
 
 # This does everything that needs to be done to an image before it's ready
 # for training/verification
@@ -89,52 +90,8 @@ class Preprocessor(object):
                 self.cache_processed_image(faces[0], image_hash)
             else:
                 not_found.append(i)
-
         return np.array(processed_images), not_found
 
-    def load_smile_picset(self, person):
-        images = []
-        path = "{}/faces/{}".format(SMILE_DATASET_PATH, person)
-        if not os.path.exists(path):
-            print("Images for {} not found at {}".format(person, path))
-            exit(1)
-
-        for (dirpath, dirnames, filenames) in os.walk(path):
-            for f in filenames:
-                if not f.endswith(".png"):
-                    continue
-                p = dirpath + "/" + f
-                images.append(cv2.imread(p))
-            break
-        return images
-
-    def get_smile_data(self):
-        known_labels = {
-            0: "Hormoz_Kheradmand",
-            1: "Colin_Armstrong",
-            2: "Djordje_Malesevic"
-        }
-
-        people = []
-        images = []
-        labels = []
-
-        for label in sorted(known_labels.keys()):
-            person = known_labels[label]
-            people.append(person)
-
-            label_picset = self.load_smile_picset(person)
-            images += label_picset
-            labels += [label for _ in range(len(label_picset))]
-
-        labels = np.array(labels)
-        images = np.array(images)
-        people = np.array(people)
-
-        images, not_found = self.process_raw_images(images)
-        labels = np.delete(labels, not_found)
-
-        return images, labels, people
 
     def get_lfw_data(self):
         people = fetch_lfw_people('./data', resize=1.0, funneled=False, min_faces_per_person=config['min_faces'])
@@ -144,11 +101,38 @@ class Preprocessor(object):
         target_names = people.target_names
         return X, y, target_names
 
+
+    def get_small_data(self):
+        person_names, file_paths = [], []
+        for person_name in sorted(listdir(SMALL_DATA_PATH)):
+            folder_path = join(SMALL_DATA_PATH, person_name)
+            if not isdir(folder_path):
+                continue
+            paths = [join(folder_path, f) for f in listdir(folder_path)]
+            n_pictures = len(paths)
+            person_names.extend([person_name] * n_pictures)
+            file_paths.extend(paths)
+        target_names = np.unique(person_names)
+        target = np.searchsorted(target_names, person_names)
+        n_faces = len(file_paths)
+        images = []
+        for p in file_paths:
+            images.append(cv2.imread(p))
+        images = np.array(images)
+
+        ## network training sensitive to consecutive same labels
+        indices = np.arange(n_faces)
+        np.random.RandomState(42).shuffle(indices)
+        images, target = images[indices], target[indices]
+
+        images, not_found = self.process_raw_images(images)
+        target = np.delete(target, not_found)
+        return images, target, target_names
+
     def get_data(self):
-        X, y, target_names = None, None, None
         if SMALL_MODEL:
-            X, y, target_names = self.get_smile_data()
+            X, y, target_names = self.get_small_data()
         else:
-            X, y, target_names = self.geet_lfw_data()
+            X, y, target_names = self.get_lfw_data()
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25)
         return X_train, X_test, y_train, y_test, target_names

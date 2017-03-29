@@ -115,8 +115,11 @@ class Model(object):
 
     def verify(self, img):
         y_prob = self.clf.predict_prob(img)
+        y_pred = self.clf.predict(img)
+        if DEBUG:
+            print("Predicted: %s\n Confidence: %s" % (self.target_names[y_pred], y_prob[0][y_pred]))
         if self.has_match(y_prob):
-            return self.target_names[self.clf.predict(img)]
+            return self.target_names[y_pred][0]
         return NO_MATCH
 
     def train(self, img, name):
@@ -128,7 +131,7 @@ class Model(object):
         return 'predicted: %s\nconfidence:     %s'%(pred_name, confidence)
 
     def has_match(self, y_prob):
-        return y_prob.max() > 0.7
+        return y_prob.max() > 0.6
 
     def display_confidence(self, x_test, y_pred, target_names):
         y_prob = self.clf.predict_prob(x_test)
