@@ -17,7 +17,7 @@ def has_converged(y):
 
 
 def test_case(param, values, n_classes, x_train, y_train, x_test, y_test, data_name, other_args={}):
-    y1 = []
+    accuracies = []
     y2 = []
     losses = []
     accuracies = []
@@ -35,12 +35,11 @@ def test_case(param, values, n_classes, x_train, y_train, x_test, y_test, data_n
             if accuracy > best_acc:
                 best_val = val
                 best_acc = accuracy
-            y1.append(accuracy)
             y2.append(loss)
     except KeyboardInterrupt:
         pass
 
-    x = np.array(range(len(y1)))
+    x = np.array(range(len(accuracies)))
 
     stats = {'n_samples'   : x_train.shape[0],
              'n_classes'   : n_classes,
@@ -57,54 +56,9 @@ def test_case(param, values, n_classes, x_train, y_train, x_test, y_test, data_n
     save_test_stats(stats, data_name)
     max_y2 = float(max(y2))
     y2 = list(map(lambda x: x/max_y2, y2))
+    #save_graph(x, accuracies, y2, param, values, data_name)
     print("Best %s: %s\nAccuracy %s" % (param, best_val, best_acc))
-    save_graph(x, y1, y2, param, values, data_name)
-
-
-def test_case(param, values, n_classes, x_train, y_train, x_test, y_test, data_name, other_args={}):
-    y1 = []
-    y2 = []
-    losses = []
-    accuracies = []
-    times = []
-    best_acc = 0
-    best_val = None
-
-    try:
-        for val in values:
-            accuracy, loss, time = test_single_var(param, val, n_classes, x_train, y_train, x_test, y_test, other_args)
-            print("Param: %s, value: %s, accuracy: %s, loss: %s" % (param, val, accuracy, loss))
-            accuracies.append(accuracy)
-            losses.append(loss)
-            times.append(time)
-            if accuracy > best_acc:
-                best_val = val
-                best_acc = accuracy
-            y1.append(accuracy)
-            y2.append(loss)
-    except KeyboardInterrupt:
-        pass
-
-    x = np.array(range(len(y1)))
-
-    stats = {'n_samples'   : x_train.shape[0],
-             'n_classes'   : n_classes,
-             'n_test'      : x_test.shape[0],
-             'param'       : param,
-             'values'      : values,
-             'accuracies'  : accuracies,
-             'losses'      : losses,
-             'tain_times'  : times,
-             'best_acc'    : best_acc,
-             'best_val'    : best_val,
-             'other_args'  : other_args}
-
-    save_test_stats(stats, data_name)
-    max_y2 = float(max(y2))
-    y2 = list(map(lambda x: x/max_y2, y2))
-    #save_graph(x, y1, y2, param, values, data_name)
-    print("Best %s: %s\nAccuracy %s" % (param, best_val, best_acc))
-    return y1
+    return accuracies
 
 
 def test_no_match(x_train, y_train, x_test, param, values, data_name, other_args = {}):
@@ -156,19 +110,19 @@ def multi_lines_graph(x, ys, labels, param, values, data_name):
     ax.legend(loc = 'lower right')
     ax.set_xlabel(param)
     fig.autofmt_xdate(rotation=80)
-    #plt.show()
     plt.savefig("data/graphs/" + "%s.png" % (data_name))
 
 
 def test_single_var(test_arg, value, n_classes, x_train, y_train, x_test, y_test, other_args = {}):
-    all_args = {test_arg : value}
+    all_args = {'kernel':'poly', 'class_weight':'balanced', 'probability':True}
+    all_args.update({test_arg : value})
     all_args.update(other_args)
-    mlp = MLPClassifier(**all_args)
+    svc = SVC(**all_args)
     t0 = time()
-    mlp.fit(x_train, y_train)
+    svc.fit(x_train, y_train)
     train_time = (time() - t0)
-    y_pred = mlp.predict(x_test)
-    y_proba = mlp.predict_proba(x_test)
+    y_pred = svc.predict(x_test)
+    y_proba = svc.predict_proba(x_test)
     accuracy = accuracy_score(y_test, y_pred)
     loss = log_loss(y_test, y_proba, labels=[i for i in range(n_classes)])
     return accuracy, loss, train_time
@@ -229,11 +183,21 @@ print("PCA_N: %s, N_COMP: %s" % (PCA_N,n_components))
 """ MULTI LINE GRAPH FOR MLP SIZE FIND"""
 ys = []
 labels = []
-values = range(1,30)
+values = [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.1]
 x = np.array(range(len(values)))
-for i in range(10,100,10):
-    y = test_case("hidden_layer_sizes", [(i,j) for j in values], n_classes, x_train, y_train, x_test, y_test, "POS_mlp(100, 1-30", other_args = {'alpha': 1.1, 'beta_1': 0.9, 'learning_rate': 'constant', 'max_iter' : 3000, 'batch_size' : 80, 'learning_rate_init':0.003})
-    ys.append(y)
+param_grid = {'C': [1e3, 5e3, 1e4, 5e4, 1e5],
+         'gamma': [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.1], }
+for i in [1e3, 5e3, 1e4, 5e4, 1e5]:
+    # accuracies = test_case("hidden_layer_sizes", [(i,j) for j in values], n_classes, x_train, y_train, x_test, y_test, "POS_mlp(100, 1-30", other_args = {'alpha': 1.1, 'beta_1': 0.9, 'learning_rate': 'constant', 'max_iter' : 3000, 'batch_size' : 80, 'learning_rate_init':0.003})
+    accuracies = test_case("gamma", values,
+                           n_classes,
+                           x_train,
+                           y_train,
+                           x_test,
+                           y_test,
+                           "POS_mlp(100, 1-30", other_args = {'C': i}
+                           )
+    ys.append(accuracies)
     labels.append("n=%s" % i)
 
 multi_lines_graph(x, ys, labels, "hidden_layer_sizes", values, "arch")
