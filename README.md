@@ -12,6 +12,14 @@ To run you need to have a few dependencies installed (I recommend installing eve
 * pickle
 * Python >= 2.7.10
 
+Start the server (while in your virtualenv) using:
+
+```
+python src/smile_server.py
+```
+
+If matplotlib complains a bunch on OSX, you should read http://matplotlib.org/faq/osx_framework.html
+
 You should also probably create the directory `data/` as soon as you pull the repo.
 
 `data/smile_home` is where faces and identities received through the api point `/train` will get saved. So take good care of it.
