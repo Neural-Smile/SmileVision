@@ -119,8 +119,8 @@ class Preprocessor(object):
 
     def get_small_data(self):
         person_names, file_paths = [], []
-        for person_name in sorted(listdir(SMALL_DATA_PATH)):
-            folder_path = join(SMALL_DATA_PATH, person_name)
+        for person_name in sorted(listdir(SMILE_DATA_PATH)):
+            folder_path = join(SMILE_DATA_PATH, person_name)
             if not isdir(folder_path):
                 continue
             paths = [join(folder_path, f) for f in listdir(folder_path)]

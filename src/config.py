@@ -1,13 +1,13 @@
+from dev_config import *
 ## GLOBALS / CONSTANTS ##
 PCA_N_COMPONENTS = 100
 MLP_ID = 1
 SVM_ID = 2
 NO_MATCH = "no_match"
-DEBUG = True
-USE_CACHED_MODEL = False
+DEBUG = DEV_DEBUG # this is ghetto sorry
+USE_CACHED_MODEL = True
 SMALL_MODEL = True
-SMILE_DATASET_PATH = "data/smile_home"
-SMALL_DATA_PATH = "data/smile_home"
+SMILE_DATA_PATH = "data/smile_home"
 PREPROCESSOR_CACHE_PATH = "data/preprocessor_cache"
 
 BEST_SMALL_MODEL = {'hidden_layer_sizes':(2,1), 'alpha':1.1, 'beta_1':0.9, 'learning_rate':'constant', 'max_iter':3000, 'batch_size': 80}
